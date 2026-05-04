@@ -383,7 +383,9 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
 
   // ─── Select view — grid layout matching get-started ───
   if (viewState === 'select') {
-    // Build items: custom first, then presets
+    // Build items: custom first, then presets. Presets flagged comingSoon are
+    // rendered disabled with a badge — they remain in the list (so the icon
+    // stays discoverable) but can't be added to a new workspace.
     const gridItems = [
       {
         id: '__custom__',
@@ -391,6 +393,7 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
         description: 'Your own MCP server with custom command and environment',
         logoPath: null as string | null,
         onClick: handleCustomSelect,
+        comingSoon: false,
       },
       ...presetsArray.map((preset) => ({
         id: preset.id,
@@ -398,6 +401,7 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
         description: preset.description || 'No description',
         logoPath: getSourceLogoPath(preset.id),
         onClick: () => handlePresetSelect(preset.id),
+        comingSoon: Boolean(preset.comingSoon),
       })),
     ]
 
@@ -439,10 +443,13 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
               )}>
               {gridItems.map((item, index) => {
                 const isCustomItem = item.id === '__custom__'
+                const isComingSoon = item.comingSoon
                 return (
                   <m.button
                     key={item.id}
                     type='button'
+                    disabled={isComingSoon}
+                    aria-disabled={isComingSoon}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -450,15 +457,39 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
                       delay: 0.2 + index * 0.04,
                       ease: smoothEaseOut,
                     }}
-                    onClick={item.onClick}
+                    onClick={isComingSoon ? undefined : item.onClick}
                     className={cn(
-                      'group flex flex-col px-6 py-6 text-left transition-colors duration-200',
-                      isDark
-                        ? 'bg-[#09090b] hover:bg-white/[0.03]'
-                        : 'bg-white hover:bg-black/[0.02]',
+                      'group relative flex flex-col px-6 py-6 text-left transition-colors duration-200',
+                      isComingSoon
+                        ? cn(
+                            'cursor-not-allowed',
+                            isDark ? 'bg-[#09090b]' : 'bg-white',
+                          )
+                        : cn(
+                            isDark
+                              ? 'bg-[#09090b] hover:bg-white/[0.03]'
+                              : 'bg-white hover:bg-black/[0.02]',
+                          ),
                     )}>
+                    {/* Coming Soon badge */}
+                    {isComingSoon && (
+                      <span
+                        className={cn(
+                          'absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide',
+                          isDark
+                            ? 'bg-white/[0.08] text-white/50'
+                            : 'bg-black/[0.06] text-black/50',
+                        )}>
+                        Coming soon
+                      </span>
+                    )}
+
                     {/* Icon / Logo */}
-                    <div className='mb-3 flex h-[28px] w-[28px] items-center justify-center'>
+                    <div
+                      className={cn(
+                        'mb-3 flex h-[28px] w-[28px] items-center justify-center',
+                        isComingSoon && 'opacity-40',
+                      )}>
                       {isCustomItem ? (
                         <RiAddLine
                           className={cn(
@@ -489,6 +520,7 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
                       className={cn(
                         'mb-2 text-[15px] font-medium',
                         isDark ? 'text-white/70' : 'text-black/70',
+                        isComingSoon && 'opacity-60',
                       )}>
                       {item.name}
                     </span>
@@ -498,6 +530,7 @@ export function AddSourceView({ onClose, onAdd }: AddSourceViewProps) {
                       className={cn(
                         'line-clamp-2 text-[13px] leading-relaxed',
                         isDark ? 'text-white/40' : 'text-black/40',
+                        isComingSoon && 'opacity-60',
                       )}>
                       {item.description}
                     </span>

@@ -56,6 +56,11 @@ export interface MCPPreset {
   oauth?: MCPOAuthConfig
   // Human-readable auth instructions
   authInstructions?: string
+  // When true, the preset is rendered as "Coming soon" in the Add Tool picker
+  // and cannot be installed by new workspaces. Workspaces that already have
+  // this preset installed (entry exists in their .mcp.config.json) keep using
+  // it normally — this flag only gates new installs.
+  comingSoon?: boolean
 }
 
 /**
@@ -1158,6 +1163,13 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     },
     authInstructions:
       'Click the authorization link below to connect your Canva account. You will be redirected to Canva to grant access to your designs, templates, and brand assets.',
+    // mcp.canva.com/authorize blocks api.thinklazarus.com (host allowlist enforced
+    // by Canva). New workspaces can't complete OAuth from the UI today, so the
+    // preset is hidden behind "Coming soon" until either Canva allowlists our
+    // host or we ship a Canva Connect-based MCP server. Already-connected
+    // workspaces (e.g. wellnest, redbarn) keep functioning because their tokens
+    // are saved on disk and their .mcp.config.json entry is preserved.
+    comingSoon: true,
   },
 
   givebutter: {
