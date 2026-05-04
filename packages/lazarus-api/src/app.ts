@@ -40,6 +40,7 @@ import { backgroundRouter } from './routes/background' // Background process mon
 import discordWebhookRouter from './routes/discord-webhook' // Discord webhook handling
 import discordSettingsRouter from './routes/discord-settings' // Discord settings management
 import slackWebhookRouter from './routes/slack-webhook' // Slack webhook handling
+import internalSlackWebhookRouter from './routes/internal-slack-webhook' // Slack webhook forwarded by orchestrator
 import integrationDiagnosticsRouter from './routes/integration-diagnostics' // Integration diagnostics
 import { internalSmokeTestRouter } from './routes/internal-smoke-test' // Internal smoke test impersonation
 import { agentTriggerWebhooksRouter } from './routes/agent-trigger-webhooks' // Inbound user webhook endpoints
@@ -99,6 +100,7 @@ export function createApp(): Express {
   app.use('/api/webhooks/discord', discordWebhookRouter) // Discord webhook handling
   app.use('/api/workspaces', discordSettingsRouter) // Discord connection settings
   app.use('/api/webhooks/slack', slackWebhookRouter) // Slack webhook handling
+  app.use('/internal/webhooks/slack', internalSlackWebhookRouter) // Orchestrator-forwarded Slack events (instance-secret auth)
   app.use('/api/diagnostics/integrations', integrationDiagnosticsRouter) // Integration diagnostics
   app.use('/api/internal', internalSmokeTestRouter) // Internal smoke test (localhost only)
   app.use('/api/hooks', agentTriggerWebhooksRouter) // User-facing inbound webhook endpoints
