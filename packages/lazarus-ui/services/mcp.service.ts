@@ -40,6 +40,10 @@ export interface MCPPreset {
   authType?: MCPAuthType
   requiresOAuth?: boolean
   authInstructions?: string
+  // When true, render this preset as "Coming soon" in the Add Tool picker —
+  // disable installation for new workspaces. Workspaces that already have it
+  // installed in their .mcp.config.json are unaffected.
+  comingSoon?: boolean
 }
 
 export interface MCPServer {

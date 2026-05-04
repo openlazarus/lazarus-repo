@@ -1,11 +1,10 @@
 'use client'
 
 import * as m from 'motion/react-m'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import Spinner from '@/components/ui/spinner'
 import { useWorkspace } from '@/hooks/core/use-workspace'
-import { getWorkspaceBaseUrl } from '@/hooks/data/use-workspace-api'
 import type {
   Workspace as PollableWorkspace,
   WorkspaceStatus,
@@ -24,33 +23,6 @@ const ERROR_HEADING = "We couldn't get your workspace ready"
 const ERROR_SUBLINE =
   'Something went wrong while setting things up. You can retry below.'
 
-const REACHABILITY_POLL_INTERVAL_MS = 2_000
-const REACHABILITY_MAX_DURATION_MS = 90_000
-
-const probeWorkspaceReachable = async (
-  workspaceId: string,
-  signal: AbortSignal,
-): Promise<void> => {
-  const baseUrl = getWorkspaceBaseUrl(workspaceId)
-  const startedAt = Date.now()
-  while (!signal.aborted) {
-    try {
-      const res = await fetch(`${baseUrl}/health`, {
-        method: 'GET',
-        signal,
-        cache: 'no-store',
-      })
-      if (res.ok) return
-    } catch {
-      // DNS/network not ready yet — keep polling
-    }
-    if (Date.now() - startedAt > REACHABILITY_MAX_DURATION_MS) {
-      throw new Error('Workspace reachability timeout')
-    }
-    await new Promise((r) => setTimeout(r, REACHABILITY_POLL_INTERVAL_MS))
-  }
-}
-
 export function WorkspacePreparingScreen({
   workspaceId,
   status,
@@ -58,8 +30,6 @@ export function WorkspacePreparingScreen({
   const { refreshWorkspaces } = useWorkspace()
   const [isRetrying, setIsRetrying] = useState(false)
   const [errored, setErrored] = useState(status === 'unhealthy')
-  const [verifyingReachability, setVerifyingReachability] = useState(false)
-  const reachabilityAbortRef = useRef<AbortController | null>(null)
 
   const pollableWorkspaces: PollableWorkspace[] = errored
     ? []
@@ -67,30 +37,18 @@ export function WorkspacePreparingScreen({
 
   useProvisioningWatcher(pollableWorkspaces, (_id, finalStatus) => {
     if (finalStatus === 'healthy') {
-      setVerifyingReachability(true)
+      void refreshWorkspaces()
     } else {
       setErrored(true)
     }
   })
 
   useEffect(() => {
-    if (!verifyingReachability) return
-    const ctrl = new AbortController()
-    reachabilityAbortRef.current = ctrl
-    probeWorkspaceReachable(workspaceId, ctrl.signal)
-      .then(() => {
-        if (!ctrl.signal.aborted) void refreshWorkspaces()
-      })
-      .catch(() => {
-        if (!ctrl.signal.aborted) setErrored(true)
-      })
-    return () => ctrl.abort()
-  }, [verifyingReachability, workspaceId, refreshWorkspaces])
+    if (status === 'unhealthy') setErrored(true)
+  }, [status])
 
   const retry = useCallback(async () => {
     setIsRetrying(true)
-    setVerifyingReachability(false)
-    reachabilityAbortRef.current?.abort()
     try {
       await api.post(`/api/workspaces/${workspaceId}/retry`, {})
       setErrored(false)

@@ -56,6 +56,11 @@ export interface MCPPreset {
   oauth?: MCPOAuthConfig
   // Human-readable auth instructions
   authInstructions?: string
+  // When true, the preset is rendered as "Coming soon" in the Add Tool picker
+  // and cannot be installed by new workspaces. Workspaces that already have
+  // this preset installed (entry exists in their .mcp.config.json) keep using
+  // it normally — this flag only gates new installs.
+  comingSoon?: boolean
 }
 
 /**
@@ -1120,7 +1125,22 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     category: 'developer',
     // Canva MCP Server - design creation, editing, and brand asset management
     // Uses remote MCP via HTTPS - connects to https://mcp.canva.com/mcp
-    // Authentication happens via browser OAuth flow (DCR) when first connected.
+    //
+    // Auth model: mcp.canva.com runs its own OAuth server (issuer
+    // https://mcp.canva.com), separate from the Canva Connect API at api.canva.com.
+    // Its /authorize endpoint enforces a hard-coded host allowlist on redirect_uri:
+    // localhost (any port) and a small set of partner hosts (e.g. claude.ai) are
+    // accepted; arbitrary hosts return 400 "Invalid redirect URI. It must be from
+    // an allowed host." This allowlist is independent of what's accepted via DCR
+    // (registration succeeds but authorization fails) and is not influenced by
+    // OAuth integrations created in the Canva Developer Portal — those are for
+    // the Canva Connect API, not the MCP server.
+    //
+    // Practical consequence: hosted server-side OAuth via this preset cannot
+    // complete from api.thinklazarus.com today. End users who want Canva should
+    // connect it from a local MCP client (Claude Desktop, Cursor, etc.) via
+    // mcp-remote on localhost. To enable hosted use, Canva must add our host to
+    // the mcp.canva.com allowlist (vendor request).
     // https://www.canva.com/help/mcp-agent-setup/
     command: 'npx',
     args: ['-y', 'mcp-remote@latest', 'https://mcp.canva.com/mcp'],
@@ -1143,6 +1163,13 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     },
     authInstructions:
       'Click the authorization link below to connect your Canva account. You will be redirected to Canva to grant access to your designs, templates, and brand assets.',
+    // mcp.canva.com/authorize blocks api.thinklazarus.com (host allowlist enforced
+    // by Canva). New workspaces can't complete OAuth from the UI today, so the
+    // preset is hidden behind "Coming soon" until either Canva allowlists our
+    // host or we ship a Canva Connect-based MCP server. Already-connected
+    // workspaces (e.g. wellnest, redbarn) keep functioning because their tokens
+    // are saved on disk and their .mcp.config.json entry is preserved.
+    comingSoon: true,
   },
 
   givebutter: {
