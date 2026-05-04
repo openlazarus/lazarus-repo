@@ -90,10 +90,7 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
     ?.status
   const showNoWorkspaces = workspaceInitialized && workspaces.length === 0
   const showPreparingWorkspace =
-    workspaceInitialized &&
-    !!selectedWorkspace &&
-    selectedStatus !== undefined &&
-    selectedStatus !== 'healthy'
+    workspaceInitialized && !!selectedWorkspace && selectedStatus !== 'healthy'
 
   // Handle workspaceId URL param (e.g. after accepting an invitation)
   const pendingWorkspaceIdRef = useRef<string | null>(null)
