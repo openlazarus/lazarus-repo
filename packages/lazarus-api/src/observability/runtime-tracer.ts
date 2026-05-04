@@ -233,7 +233,7 @@ export class RuntimeTracer implements IAgentRuntime {
         if (finalStatus === 'completed') {
           runSpan.setAttribute('lazarus.final_status', 'completed')
         }
-        if (firstUserText) {
+        if (firstUserText && !ctx.title) {
           runSpan.setAttribute(SPAN_ATTRS.title, generateQuickTitle(firstUserText))
         }
         runSpan.end()

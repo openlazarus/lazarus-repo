@@ -368,6 +368,7 @@ export class SlackService implements ISlackService {
           workspaceId: connection.workspaceId,
           userId: connection.createdBy,
           task: taskContext,
+          userMessage: message.text,
           maxTurns: MAX_TURNS.slack,
           // Platform integration for activity logging
           platformSource: 'slack',
