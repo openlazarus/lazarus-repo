@@ -1,0 +1,43 @@
+# Business Presentation Example
+presentation:
+  meta:
+    title: "My Presentation"
+    author: "Your Name"
+    date: "2025-06-12"
+    theme: minimal
+    aspectRatio: "16:9"
+    
+  defaults:
+    transition: fade
+    duration: 0.5
+    
+  slides:
+    - type: title
+      title: "Welcome"
+      subtitle: "Let's get started"
+
+    - type: data-viz
+      title: "Growth Trend"
+      data:
+        type: line
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+        datasets:
+          - label: "Users"
+            data: [1200, 1900, 3000, 5000, 6200, 8300]
+            borderColor: "#007AFF"
+
+    - type: data-viz
+      title: "Quarterly Revenue"
+      subtitle: "In millions USD"
+      data:
+        type: bar
+        labels: ["Q1", "Q2", "Q3", "Q4"]
+        datasets:
+          - label: "2023"
+            data: [45, 52, 48, 61]
+            backgroundColor: "#007AFF"
+          - label: "2024"
+            data: [52, 58, 55, 68]
+            backgroundColor: "#34C759"
+            
+    # Add more slides here using the template menu 

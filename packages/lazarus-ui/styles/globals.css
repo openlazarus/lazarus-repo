@@ -1,0 +1,718 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Prevent horizontal scrolling globally */
+  html,
+  body {
+    /* overflow-x: hidden; */
+    max-width: 100vw;
+  }
+
+  /* iOS Safari - Prevent body from being pushed up by dynamic UI */
+  html {
+    /* Use dynamic viewport height that adjusts when Safari UI shows/hides */
+    min-height: -webkit-fill-available;
+  }
+
+  body {
+    /* Ensure body fills available space accounting for Safari UI */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    /* Prevent bounce/overscroll on iOS */
+    overscroll-behavior-y: none;
+    position: relative;
+  }
+
+  /* Prevent body scroll on mobile — layout is handled by h-mobile-screen */
+  @media (max-width: 768px) {
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+  }
+
+  /* Ensure text content respects container boundaries without breaking layout */
+  p,
+  span,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  li,
+  td,
+  th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  :root {
+    /* ============================================================ */
+    /* Design System - Colors                                        */
+    /* ============================================================ */
+
+    /* Primary Colors */
+    --lazarus-blue: 204 98% 49%; /* #0098FC */
+    --lazarus-cyan: 193 100% 50%; /* #00D4FF */
+
+    /* Neutral Colors */
+    --lazarus-black: 0 0% 0%; /* #000000 */
+    --lazarus-white: 0 0% 100%; /* #FFFFFF */
+
+    /* Gray Scale */
+    --lazarus-gray-1000: 0 0% 7%; /* #131313 */
+    --lazarus-gray-900: 240 3% 7%; /* #111112 - matches dark background */
+    --lazarus-gray-700: 240 3% 45%; /* #6e6e73 */
+    --lazarus-gray-600: 240 3% 54%; /* #86868b */
+    --lazarus-gray-500: 240 2% 64%; /* #a1a1a6 */
+    --lazarus-gray-200: 240 2% 90%; /* #e5e5e7 */
+    --lazarus-gray-100: 0 0% 96%; /* #f5f5f5 - matches light background */
+
+    /* Legacy gray scale (for backward compatibility) */
+    --lazarus-gray-300: 240 3.8% 30.1%;
+    --lazarus-gray-400: 240 2% 60%;
+    --lazarus-gray-800: 240 10% 3.9%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(90deg, #0098fc, #00d4ff);
+    --gradient-subtle: linear-gradient(
+      135deg,
+      rgba(0, 152, 252, 0.2),
+      transparent,
+      rgba(0, 212, 255, 0.1)
+    );
+    --gradient-dark: linear-gradient(90deg, #000000, #1d1d1f);
+
+    /* Base theme colors */
+    --background: var(--lazarus-gray-100); /* #f5f5f5 - matches SIGNIN_THEME */
+    --background-secondary: 0 0% 95%;
+    --foreground: 0 0% 10%; /* #1a1a1a - matches SIGNIN_THEME text.primary */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%; /* #1a1a1a */
+
+    /* Text color hierarchy - matches SIGNIN_THEME */
+    --text-primary: 0 0% 10%; /* #1a1a1a */
+    --text-secondary: 0 0% 40%; /* #666666 */
+    --text-tertiary: 0 0% 60%; /* #999999 */
+
+    --muted: var(--lazarus-gray-200);
+    --muted-dark: 240 4.8% 85.9%; /* darker variant */
+    --muted-foreground: var(--lazarus-gray-600);
+
+    /* Button colors */
+    --button-secondary: 240 3% 93%; /* #ECECED */
+    --button-secondary-hover: 240 3% 90%;
+
+    --popover: var(--lazarus-gray-900);
+    --popover-foreground: 0 0% 98%;
+
+    --primary: var(--lazarus-gray-900);
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: var(--lazarus-gray-500);
+    --secondary-foreground: var(--lazarus-gray-400);
+
+    --accent: var(--lazarus-gray-600);
+    --accent-foreground: var(--lazarus-blue);
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --lazarus-red: 0 84% 60%;
+
+    --border: 0 0% 0% / 0.05; /* rgba(0, 0, 0, 0.05) - matches SIGNIN_THEME */
+    --border-dark: 0 0% 0% / 0.1; /* rgba(0, 0, 0, 0.1) */
+    --input: var(--lazarus-gray-100); /* #f5f5f5 */
+    --input-placeholder: var(--lazarus-gray-600); /* #86868b */
+    --input-icon: var(--lazarus-gray-600); /* #86868b */
+    --ring: var(--lazarus-gray-700);
+
+    --radius: 0.5rem;
+
+    /* Additional color variables */
+    --lazarus-blue-light: 204 98% 60%;
+    --lazarus-blue-dark: 204 98% 40%;
+    --lazarus-blue-hover: 204 98% 42%; /* #0080d6 - matches SIGNIN_THEME primaryHover */
+    --lazarus-blue-600: 204 98% 35%;
+
+    /* ============================================================ */
+    /* Design System - Typography                                    */
+    /* ============================================================ */
+
+    /* Font family */
+    --font-helvetica:
+      'Helvetica', 'Helvetica Neue', 'Arial', -apple-system, BlinkMacSystemFont,
+      sans-serif;
+
+    /* Typography Scale */
+    --font-size-display: 5rem; /* 80px */
+    --font-size-h1: 4rem; /* 64px */
+    --font-size-h2: 3.5rem; /* 56px */
+    --font-size-h3: 2rem; /* 32px */
+    --font-size-h4: 1.5rem; /* 24px */
+    --font-size-body-large: 1.5rem; /* 24px */
+    --font-size-body: 1.0625rem; /* 17px */
+    --font-size-caption: 0.8125rem; /* 13px */
+
+    /* Legacy font sizes (for backward compatibility) */
+    --font-size-11: 0.6875rem; /* 11px */
+    --font-size-12: 0.75rem; /* 12px */
+    --font-size-14: 0.875rem; /* 14px */
+    --font-size-15: 0.9375rem; /* 15px */
+    --font-size-16: 1rem; /* 16px */
+    --font-size-17: 1.0625rem; /* 17px */
+    --font-size-20: 1.25rem; /* 20px */
+    --font-size-22: 1.375rem; /* 22px */
+    --font-size-24: 1.5rem; /* 24px */
+    --font-size-28: 1.75rem; /* 28px */
+    --font-size-32: 2rem; /* 32px */
+    --font-size-40: 2.5rem; /* 40px */
+    --font-size-48: 3rem; /* 48px */
+    --font-size-56: 3.5rem; /* 56px */
+    --font-size-64: 4rem; /* 64px */
+
+    /* Line heights */
+    --line-height-display: 0.8;
+    --line-height-h1: 0.95;
+    --line-height-h2: 1.05;
+    --line-height-h3: 1.2;
+    --line-height-h4: 1.3;
+    --line-height-body-large: 1.4;
+    --line-height-body: 1.6;
+    --line-height-caption: 1.5;
+
+    /* Legacy line heights */
+    --line-height-tight: 1.1;
+    --line-height-normal: 1.2;
+    --line-height-relaxed: 1.3;
+
+    /* Letter spacing */
+    --letter-spacing-display: -0.05em;
+    --letter-spacing-h1: -0.04em;
+    --letter-spacing-h2: -0.03em;
+    --letter-spacing-h3: -0.02em;
+    --letter-spacing-h4: -0.01em;
+    --letter-spacing-body: -0.01em;
+    --letter-spacing-caption: 0.08em;
+
+    /* Font weights */
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* ============================================================ */
+    /* Design System - Spacing                                       */
+    /* ============================================================ */
+
+    --spacing-xxs: 0.25rem; /* 4px */
+    --spacing-xs: 0.5rem; /* 8px */
+    --spacing-s: 1rem; /* 16px */
+    --spacing-m: 1.5rem; /* 24px */
+    --spacing-l: 2rem; /* 32px */
+    --spacing-xl: 3rem; /* 48px */
+    --spacing-xxl: 4rem; /* 64px */
+    --spacing-xxxl: 6rem; /* 96px */
+
+    /* ============================================================ */
+    /* Design System - Motion                                        */
+    /* ============================================================ */
+
+    --motion-duration-micro: 200ms; /* fast - matches SIGNIN_THEME */
+    --motion-duration-standard: 400ms; /* medium - matches SIGNIN_THEME */
+    --motion-duration-complex: 600ms; /* slow - matches SIGNIN_THEME */
+
+    --motion-easing-default: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-easing-out: ease-out;
+    --motion-easing-in-out: ease-in-out;
+
+    /* ============================================================ */
+    /* Layout & Components                                           */
+    /* ============================================================ */
+
+    /* Nav Position and Width */
+    --nav-width: 500px;
+    --nav-position: right;
+
+    /* Command bar textarea variables */
+    --textarea-min-height: 40px;
+    --textarea-max-height: 160px;
+    --textarea-line-height: 1.4;
+    --command-bar-default-height: 130px;
+    --command-container-transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* File tab colors */
+    --file-tab-active-bg: #f5f5f5;
+  }
+
+  /* ============================================================ */
+  /* Typography Styles                                             */
+  /* ============================================================ */
+
+  /* Font family application */
+  html,
+  body,
+  #__next,
+  main,
+  div,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-helvetica);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'kern';
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  /* Hide scrollbars for all elements while maintaining functionality */
+  html,
+  body,
+  div,
+  main,
+  section,
+  article,
+  aside,
+  nav,
+  header,
+  footer {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  /* Hide WebKit scrollbars (Chrome, Safari, newer Edge) */
+  ::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+
+  /* Heading hierarchy - Design System */
+  h1 {
+    font-size: var(--font-size-h1);
+    line-height: var(--line-height-h1);
+    letter-spacing: var(--letter-spacing-h1);
+    font-weight: var(--font-weight-bold);
+  }
+
+  h2 {
+    font-size: var(--font-size-h2);
+    line-height: var(--line-height-h2);
+    letter-spacing: var(--letter-spacing-h2);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  h3 {
+    font-size: var(--font-size-h3);
+    line-height: var(--line-height-h3);
+    letter-spacing: var(--letter-spacing-h3);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  h4 {
+    font-size: var(--font-size-h4);
+    line-height: var(--line-height-h4);
+    letter-spacing: var(--letter-spacing-h4);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  h5 {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  h6 {
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-caption);
+    letter-spacing: var(--letter-spacing-caption);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+  }
+
+  /* Hero heading style override */
+  h1.hero-heading {
+    font-size: clamp(35px, 5vw, 48px) !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.025em !important;
+    font-weight: 600 !important;
+  }
+
+  /* Display heading */
+  .text-display {
+    font-size: var(--font-size-display);
+    line-height: var(--line-height-display);
+    letter-spacing: var(--letter-spacing-display);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Paragraph styling */
+  p {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  /* Small text */
+  small,
+  .text-sm {
+    font-size: var(--font-size-12);
+    line-height: var(--line-height-relaxed);
+    letter-spacing: -0.005em;
+  }
+
+  /* Standardize font-weight rendering */
+  .font-regular {
+    font-weight: var(--font-weight-regular) !important;
+  }
+
+  .font-medium {
+    font-weight: var(--font-weight-medium) !important;
+  }
+
+  .font-semibold {
+    font-weight: var(--font-weight-semibold) !important;
+  }
+
+  .font-bold {
+    font-weight: var(--font-weight-bold) !important;
+  }
+
+  /* Custom utility classes for typography */
+  .text-label {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-caption);
+    text-transform: uppercase;
+  }
+
+  .text-caption {
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-caption);
+    letter-spacing: var(--letter-spacing-caption);
+    color: hsl(var(--muted-foreground));
+  }
+
+  .text-body-large {
+    font-size: var(--font-size-body-large);
+    line-height: var(--line-height-body-large);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  .text-body {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  .text-body-small {
+    font-size: var(--font-size-14);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  /* ============================================================ */
+  /* Dark Theme                                                    */
+  /* ============================================================ */
+
+  .dark {
+    --background: var(--lazarus-gray-900); /* #111112 - matches SIGNIN_THEME */
+    --background-secondary: var(--lazarus-black); /* #000000 */
+    --foreground: 0 0% 100%; /* rgba(255, 255, 255, 1) - matches SIGNIN_THEME */
+
+    --card: var(--lazarus-black); /* #000000 - matches SIGNIN_THEME */
+    --card-foreground: 0 0% 100%;
+
+    /* Text color hierarchy - matches SIGNIN_THEME */
+    --text-primary: 0 0% 100%; /* rgba(255, 255, 255, 1) */
+    --text-secondary: 0 0% 100% / 0.6; /* rgba(255, 255, 255, 0.6) */
+    --text-tertiary: 0 0% 100% / 0.5; /* rgba(255, 255, 255, 0.5) */
+
+    --popover: var(--lazarus-gray-900);
+    --popover-foreground: var(--lazarus-gray-100);
+
+    --primary: var(--lazarus-gray-100);
+    --primary-foreground: var(--lazarus-black);
+
+    --secondary: var(--lazarus-gray-700);
+    --secondary-foreground: var(--lazarus-gray-100);
+
+    --muted: var(--lazarus-gray-700);
+    --muted-foreground: var(--lazarus-gray-500);
+
+    --accent: var(--lazarus-gray-700);
+    --accent-foreground: var(--lazarus-blue);
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: var(--lazarus-gray-100);
+
+    --border: 0 0% 100% / 0.1; /* rgba(255, 255, 255, 0.1) - matches SIGNIN_THEME */
+    --border-dark: 0 0% 100% / 0.15; /* rgba(255, 255, 255, 0.15) */
+    --input: 0 0% 100% / 0.08; /* rgba(255, 255, 255, 0.08) */
+    --input-placeholder: 0 0% 100% / 0.4; /* rgba(255, 255, 255, 0.4) */
+    --input-icon: 0 0% 100% / 0.5; /* rgba(255, 255, 255, 0.5) */
+    --ring: var(--lazarus-gray-600);
+
+    /* Chat-specific colors */
+    --chat-agent-bg: 240 2% 15%; /* #111112 */
+
+    /* File tab colors */
+    --file-tab-active-bg: #111112;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================================================ */
+/* Animations                                                    */
+/* ============================================================ */
+
+/* Typing animation */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-typing {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 0.75s steps(10, end) forwards;
+}
+
+/* Entrance animations */
+@keyframes title-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtitle-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-title-fade-in {
+  animation: title-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+.animate-subtitle-fade-in {
+  animation: subtitle-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.2s;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+/* Avatar highlight animation */
+@keyframes avatar-highlight {
+  0% {
+    background-color: var(--lazarus-gray-200);
+  }
+  50% {
+    background-color: var(--lazarus-gray-300);
+  }
+  100% {
+    background-color: var(--lazarus-gray-200);
+  }
+}
+
+.animate-avatar-highlight {
+  animation: avatar-highlight 1s infinite;
+}
+
+/* ============================================================ */
+/* Layout Utilities                                              */
+/* ============================================================ */
+
+/* Mobile Safari - Prevent content from hiding behind UI */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific: Ensure proper spacing for Safari bottom bar */
+  .mobile-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Prevent iOS Safari zoom on input focus */
+  input,
+  textarea,
+  select,
+  [contenteditable] {
+    font-size: 16px !important;
+  }
+}
+
+/* Chat-specific overflow prevention */
+.message-content {
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.message-list {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.ask-tab,
+.chat-container {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ============================================================ */
+/* Component Utilities                                           */
+/* ============================================================ */
+
+/* iOS Safe Area Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pb-safe-or-3 {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pb-safe-or-4 {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile viewport height utilities */
+.h-mobile-screen {
+  height: 100vh; /* Fallback */
+  height: calc(var(--vh, 1vh) * 100); /* JS-based dynamic height */
+  height: -webkit-fill-available; /* iOS Safari */
+  height: 100dvh; /* Dynamic viewport height for modern browsers */
+}
+
+.min-h-mobile-screen {
+  min-height: 100vh; /* Fallback */
+  min-height: calc(var(--vh, 1vh) * 100); /* JS-based dynamic height */
+  min-height: -webkit-fill-available; /* iOS Safari */
+  min-height: 100dvh; /* Dynamic viewport height for modern browsers */
+}
+
+/* Gradient backgrounds */
+.bg-gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.bg-gradient-subtle {
+  background: var(--gradient-subtle);
+}
+
+.bg-gradient-dark {
+  background: var(--gradient-dark);
+}
+
+/* Transition utilities */
+.transition-micro {
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-easing-out);
+}
+
+.transition-standard {
+  transition-duration: var(--motion-duration-standard);
+  transition-timing-function: var(--motion-easing-in-out);
+}
+
+.transition-complex {
+  transition-duration: var(--motion-duration-complex);
+  transition-timing-function: var(--motion-easing-default);
+}
+
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Table scroll container - shows thin scrollbar on hover */
+.table-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.table-scroll-container:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  display: block !important;
+  height: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.table-scroll-container:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .table-scroll-container {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.dark .table-scroll-container:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark .table-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .table-scroll-container:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}

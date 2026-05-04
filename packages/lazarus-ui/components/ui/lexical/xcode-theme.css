@@ -1,0 +1,233 @@
+/* Xcode-themed Code Editor Styles */
+
+/* Remove all padding/margins for code views */
+.lexical-editor-container.code-editor-mode {
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+.lexical-editor-container.code-editor-mode .lexical-content-editable {
+  padding: 0;
+  background: #ffffff;
+}
+
+/* Xcode light theme colors */
+.lexical-editor-container.code-editor-mode .editor-code {
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 1rem;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  tab-size: 4;
+  color: #000000;
+  box-shadow: none;
+}
+
+/* Syntax highlighting - Xcode Light Theme */
+
+.lexical-editor-container.code-editor-mode .editor-tokenComment {
+  color: #5d6c79;
+  font-style: italic;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenPunctuation {
+  color: #000000;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenProperty {
+  color: #3a00dc;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenSelector {
+  color: #673ab7;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenOperator {
+  color: #000000;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenAttr {
+  color: #804fb8;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenVariable {
+  color: #3a00dc;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenFunction {
+  color: #2c2d7b;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenKeyword {
+  color: #9b2f90;
+  font-weight: 600;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenString {
+  color: #d12f1b;
+}
+
+.lexical-editor-container.code-editor-mode .editor-tokenNumber {
+  color: #1c00cf;
+}
+
+/* Xcode Dark Theme */
+.dark .lexical-editor-container.code-editor-mode {
+  background: #111112;
+}
+
+.dark .lexical-editor-container.code-editor-mode .lexical-content-editable {
+  background: #111112;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-code {
+  background: #111112;
+  color: #ffffff;
+}
+
+/* Syntax highlighting - Xcode Dark Theme */
+.dark .lexical-editor-container.code-editor-mode .editor-tokenComment {
+  color: #6c7986;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenPunctuation {
+  color: #ffffff;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenProperty {
+  color: #7fb6df;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenSelector {
+  color: #b281eb;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenOperator {
+  color: #ffffff;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenAttr {
+  color: #ce9178;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenVariable {
+  color: #7fb6df;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenFunction {
+  color: #4fc1ff;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenKeyword {
+  color: #fc5fa3;
+  font-weight: 600;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenString {
+  color: #fc6a5d;
+}
+
+.dark .lexical-editor-container.code-editor-mode .editor-tokenNumber {
+  color: #d0bf69;
+}
+
+/* CSV Table Editor Mode - Clean, borderless design */
+.lexical-editor-container.csv-editor-mode {
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+.lexical-editor-container.csv-editor-mode .lexical-content-editable {
+  padding: 0;
+  margin: 0;
+}
+
+/* Remove default table borders and use clean design */
+.lexical-editor-container.csv-editor-mode .editor-table {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  width: auto;
+  min-width: 100%;
+}
+
+.lexical-editor-container.csv-editor-mode .editor-table-cell {
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 8px 12px;
+  background: #ffffff;
+  min-width: 120px;
+}
+
+.lexical-editor-container.csv-editor-mode .editor-table-cell:last-child {
+  border-right: none;
+}
+
+.lexical-editor-container.csv-editor-mode
+  .editor-table-row:last-child
+  .editor-table-cell {
+  border-bottom: none;
+}
+
+/* Header cells with subtle background */
+.lexical-editor-container.csv-editor-mode .editor-table-cell-header {
+  background: #f8f8f8;
+  font-weight: 600;
+  font-size: 10px;
+  color: #48484a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode for CSV tables */
+.dark .lexical-editor-container.csv-editor-mode {
+  background: #111112;
+}
+
+.dark .lexical-editor-container.csv-editor-mode .editor-table-cell {
+  background: #111112;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.dark .lexical-editor-container.csv-editor-mode .editor-table-cell-header {
+  background: #2a2a30;
+  color: #9ca3af;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Hover effects */
+.lexical-editor-container.csv-editor-mode .editor-table-cell:hover {
+  background: #f0f9ff;
+}
+
+.dark .lexical-editor-container.csv-editor-mode .editor-table-cell:hover {
+  background: #2a3f5a;
+}
+
+/* Remove focus outlines */
+.lexical-editor-container.csv-editor-mode .editor-table-cell:focus {
+  outline: 2px solid #0098fc;
+  outline-offset: -2px;
+}
+
+/* Document mode - keep padding for readability */
+.lexical-editor-container.document-mode .lexical-content-editable {
+  padding: 2rem;
+}
+
+/* Markdown mode - similar to document but tighter */
+.lexical-editor-container.markdown-mode .lexical-content-editable {
+  padding: 1.5rem 2rem;
+}

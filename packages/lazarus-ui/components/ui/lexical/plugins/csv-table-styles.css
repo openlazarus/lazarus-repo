@@ -1,0 +1,137 @@
+/* CSV Table Styles - Optimized for data viewing */
+
+/* Container wrapper for horizontal scrolling */
+.csv-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Override default table width to allow natural sizing */
+.csv-table-wrapper .editor-table {
+  width: auto !important;
+  min-width: 100%;
+  table-layout: auto; /* Allow columns to size based on content */
+}
+
+/* Set minimum column widths to prevent over-compression */
+.csv-table-wrapper .editor-table-cell {
+  min-width: 100px;
+  white-space: nowrap; /* Prevent text wrapping by default */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+/* Header cells should be slightly wider */
+.csv-table-wrapper .editor-table-cell-header {
+  min-width: 120px;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f5f5f7;
+}
+
+/* Allow text to wrap on hover/focus for reading full content */
+.csv-table-wrapper .editor-table-cell:hover,
+.csv-table-wrapper .editor-table-cell:focus-within {
+  white-space: normal;
+  overflow: visible;
+  z-index: 5;
+}
+
+/* Add visual indicator for cells with truncated content */
+.csv-table-wrapper .editor-table-cell.has-overflow::after {
+  content: '...';
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: 10px;
+  color: #999;
+  background: linear-gradient(to right, transparent, white 20%);
+  padding-left: 10px;
+}
+
+/* Responsive column widths based on content type */
+.csv-table-wrapper .editor-table-cell[data-type='number'] {
+  min-width: 80px;
+  text-align: right;
+}
+
+.csv-table-wrapper .editor-table-cell[data-type='date'] {
+  min-width: 110px;
+}
+
+.csv-table-wrapper .editor-table-cell[data-type='boolean'] {
+  min-width: 60px;
+  text-align: center;
+}
+
+.csv-table-wrapper .editor-table-cell[data-type='text'] {
+  min-width: 150px;
+}
+
+/* Horizontal scroll indicator */
+.csv-table-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 30px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.csv-table-wrapper.can-scroll-right::after {
+  opacity: 1;
+}
+
+/* Dark mode adjustments */
+:is(.dark .csv-table-wrapper) .editor-table-cell-header {
+  background: #1c1c1e;
+}
+
+:is(.dark .csv-table-wrapper) .editor-table-cell.has-overflow::after {
+  background: linear-gradient(to right, transparent, #111112 20%);
+}
+
+:is(.dark .csv-table-wrapper)::after {
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05));
+}
+
+/* Scrollbar styling for better visibility */
+.csv-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+  background: transparent;
+}
+
+.csv-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.csv-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.csv-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+:is(.dark .csv-table-wrapper)::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:is(.dark .csv-table-wrapper)::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+:is(.dark .csv-table-wrapper)::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

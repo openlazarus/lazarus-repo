@@ -1,0 +1,25 @@
+{
+  "plugins": [
+    "prettier-plugin-organize-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "semi": false,
+  "arrowParens": "always",
+  "bracketSameLine": true,
+  "jsxSingleQuote": true,
+  "printWidth": 80,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ],
+  "endOfLine": "auto"
+}

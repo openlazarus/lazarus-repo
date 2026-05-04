@@ -1,0 +1,69 @@
+{
+  "$schema": "./cache-invalidation.schema.json",
+  "description": "Cache invalidation rules configuration. This file defines how different database operations affect cache invalidation across domains.",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "name": "messages",
+      "pattern": "messages.*",
+      "tables": ["messages"],
+      "operations": ["insert", "update", "delete"]
+    },
+    {
+      "name": "conversations",
+      "pattern": "conversations.*",
+      "tables": ["conversations"],
+      "operations": ["insert", "update", "delete"]
+    },
+    {
+      "name": "files",
+      "pattern": "files.*",
+      "tables": ["files"],
+      "operations": ["insert", "update", "delete"]
+    },
+    {
+      "name": "workspaces",
+      "pattern": "workspaces.*",
+      "tables": ["workspaces"],
+      "operations": ["insert", "update", "delete"]
+    },
+    {
+      "name": "apps",
+      "pattern": "apps.*",
+      "tables": ["apps"],
+      "operations": ["insert", "update", "delete"]
+    },
+    {
+      "name": "labels-cross-domain",
+      "description": "Label operations affect search caches across all domains because they use label filters",
+      "pattern": "labels.*",
+      "tables": ["labels"],
+      "operations": ["insert", "update", "delete"],
+      "crossDomainInvalidation": "onLabelChange"
+    },
+    {
+      "name": "tags-cross-domain",
+      "description": "Tag operations affect search caches across all domains (future feature)",
+      "pattern": "tags.*",
+      "tables": ["tags"],
+      "operations": ["insert", "update", "delete"],
+      "crossDomainInvalidation": "onTagChange"
+    }
+  ],
+  "crossDomainHandlers": {
+    "onLabelChange": {
+      "affectedDomains": ["files", "conversations", "apps"],
+      "filterType": "labels"
+    },
+    "onTagChange": {
+      "description": "When tags change, invalidate all search caches that use tag filters",
+      "affectedDomains": ["files", "conversations", "apps"],
+      "filterType": "tags"
+    }
+  },
+  "metadata": {
+    "lastUpdated": "2024-01-01",
+    "maintainer": "Cache Team",
+    "documentation": "docs/cache-architecture-guide.md"
+  }
+}

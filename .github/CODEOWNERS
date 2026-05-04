@@ -1,0 +1,8 @@
+# Default owners — review required for any change
+* @ignacioberdinas @pafmercuri @sencina
+
+# Backend
+/packages/lazarus-api/ @sencina @ignacioberdinas
+
+# Frontend
+/packages/lazarus-ui/ @sencina @pafmercuri

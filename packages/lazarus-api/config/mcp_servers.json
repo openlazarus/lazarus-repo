@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "${DATABASE_URL}"
+      ],
+      "enabled": false,
+      "transport": "stdio",
+      "icon": "\ud83d\uddc4\ufe0f",
+      "category": "database",
+      "description": "PostgreSQL database - Set DATABASE_URL env var to use"
+    },
+    "hubspot": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@hubspot/mcp-server"
+      ],
+      "env": {
+        "PRIVATE_APP_ACCESS_TOKEN": "${HUBSPOT_ACCESS_TOKEN}"
+      },
+      "enabled": false,
+      "transport": "stdio",
+      "description": "HubSpot MCP Server - Set PRIVATE_APP_ACCESS_TOKEN and enable to use",
+      "icon": "\ud83d\udd17",
+      "category": "crm",
+      "preset_id": "hubspot"
+    }
+  }
+}

@@ -1,0 +1,386 @@
+/* Spreadsheet Animation System */
+
+/* Custom Properties for Animation Control */
+@property --spring-scale {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --glow-opacity {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Base Transitions */
+.spreadsheet-cell {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: transform, opacity;
+  position: relative;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Cell Content Animation - Smooth Entry */
+@keyframes cellContentEntry {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Cell Update Highlight */
+@keyframes cellUpdateGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    background-color: rgba(59, 130, 246, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    background-color: rgba(59, 130, 246, 0);
+  }
+}
+
+/* Column/Row Drag States */
+.draggable-column {
+  cursor: move;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.draggable-column:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.draggable-row {
+  cursor: move;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dragging State */
+.dragging {
+  opacity: 0.4;
+  transform: scale(1.02) rotate(1deg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: none;
+}
+
+/* Drop Target Animation */
+@keyframes dropTargetPulse {
+  0%,
+  100% {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scaleX(1);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: scaleX(1.02);
+  }
+}
+
+.drop-target {
+  animation: dropTargetPulse 1s ease-in-out infinite;
+  position: relative;
+}
+
+.drop-target::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, transparent, #0098fc, transparent);
+  animation: slideIndicator 1s ease-in-out infinite;
+}
+
+@keyframes slideIndicator {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scaleY(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* Column/Row Slide Animation */
+.column-slide-left {
+  animation: slideLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.column-slide-right {
+  animation: slideRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Row Animations - Using transform instead of translateY for better table compatibility */
+.row-slide-up {
+  animation: rowSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.row-slide-down {
+  animation: rowSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes rowSlideUp {
+  from {
+    opacity: 0.8;
+    transform: scale(1, 0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes rowSlideDown {
+  from {
+    opacity: 0.8;
+    transform: scale(1, 0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
+}
+
+/* Spring Bounce for Drop */
+@keyframes springSettle {
+  0% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  40% {
+    transform: scale(0.98) translateY(1px);
+  }
+  80% {
+    transform: scale(1.01) translateY(-0.5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.spring-settle {
+  animation: springSettle 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Cell Type-Specific Animations */
+.cell-content-number {
+  animation: numberTick 0.3s ease-out;
+}
+
+@keyframes numberTick {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cell-content-text {
+  animation: textFade 0.25s ease-out;
+}
+
+@keyframes textFade {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Selection Animation */
+.cell-selected {
+  animation: selectionPulse 0.3s ease-out;
+}
+
+@keyframes selectionPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* Smooth Focus Ring */
+.cell-focus-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.cell-focused .cell-focus-ring {
+  opacity: 1;
+}
+
+/* Performance Optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Text Wrap Toggle Animation */
+.spreadsheet-cell {
+  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spreadsheet-cell .truncate,
+.spreadsheet-cell .whitespace-normal {
+  transition: all 0.15s ease-in-out;
+}
+
+/* Row Height Transition */
+tr {
+  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Effects for Interactive Elements */
+.group:hover .group-hover\:opacity-100 {
+  transition: opacity 0.15s ease-in;
+}
+
+/* Text Alignment Classes */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Text Formatting */
+.font-bold {
+  font-weight: 700;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+/* Formatting Ribbon Animation */
+@keyframes ribbonSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.formatting-ribbon-enter {
+  animation: ribbonSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cell Border Styles */
+.border-top {
+  border-top: 1px solid #e5e7eb;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.border-left {
+  border-left: 1px solid #e5e7eb;
+}
+
+.border-right {
+  border-right: 1px solid #e5e7eb;
+}
+
+/* When cells have background colors, ensure borders are visible */
+.spreadsheet-cell[style*='background'] {
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Header cells */
+th {
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Remove double borders at edges */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Row headers */
+.row-header {
+  border-right: 1px solid #e5e7eb;
+}
