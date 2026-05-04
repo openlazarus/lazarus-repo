@@ -1120,7 +1120,11 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     category: 'developer',
     // Canva MCP Server - design creation, editing, and brand asset management
     // Uses remote MCP via HTTPS - connects to https://mcp.canva.com/mcp
-    // Authentication happens via browser OAuth flow (DCR) when first connected.
+    // Canva's OAuth server rejects Dynamic Client Registration callback hosts,
+    // so each user must register their own OAuth integration in the Canva
+    // Developer Portal and supply the resulting client_id / client_secret.
+    // The integration's redirect URL must be set to:
+    //   https://api.thinklazarus.com/api/mcp/oauth/callback
     // https://www.canva.com/help/mcp-agent-setup/
     command: 'npx',
     args: ['-y', 'mcp-remote@latest', 'https://mcp.canva.com/mcp'],
@@ -1128,10 +1132,37 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     description:
       'Connect to Canva to create, edit, and manage designs, templates, and brand assets using natural language',
     env_schema: {
-      // No required env vars - Canva uses browser-based OAuth authentication (DCR)
-      // Each user authenticates individually with Canva
+      CANVA_CLIENT_ID: {
+        required: true,
+        secure: false,
+        type: 'text',
+        description:
+          'Client ID from your Canva developer integration (Developer Portal → Your integrations → Authentication)',
+        placeholder: 'OC-...',
+      },
+      CANVA_CLIENT_SECRET: {
+        required: true,
+        secure: true,
+        type: 'text',
+        description:
+          'Client Secret from your Canva developer integration (generated alongside the Client ID)',
+      },
     },
-    envSchema: {},
+    envSchema: {
+      CANVA_CLIENT_ID: {
+        required: true,
+        sensitive: false,
+        description:
+          'Client ID from your Canva developer integration (Developer Portal → Your integrations → Authentication)',
+        placeholder: 'OC-...',
+      },
+      CANVA_CLIENT_SECRET: {
+        required: true,
+        sensitive: true,
+        description:
+          'Client Secret from your Canva developer integration (generated alongside the Client ID)',
+      },
+    },
     config: {
       command: 'npx',
       args: ['-y', 'mcp-remote@latest', 'https://mcp.canva.com/mcp'],
@@ -1140,9 +1171,11 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     authType: 'oauth',
     oauth: {
       remoteUrl: 'https://mcp.canva.com/mcp',
+      clientIdEnvVar: 'CANVA_CLIENT_ID',
+      clientSecretEnvVar: 'CANVA_CLIENT_SECRET',
     },
     authInstructions:
-      'Click the authorization link below to connect your Canva account. You will be redirected to Canva to grant access to your designs, templates, and brand assets.',
+      "Create an integration in the Canva Developer Portal and add this redirect URL to it: https://api.thinklazarus.com/api/mcp/oauth/callback. Then enter the integration's Client ID and Client Secret here, save, and click Authorize.",
   },
 
   givebutter: {
