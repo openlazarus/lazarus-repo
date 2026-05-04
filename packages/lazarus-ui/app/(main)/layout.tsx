@@ -15,6 +15,8 @@ import {
 } from 'react'
 
 import { WebhookUrlModal } from '@/components/features/agents/webhook-url-modal'
+import { NoWorkspacesScreen } from '@/components/features/workspace/no-workspaces-screen'
+import { WorkspacePreparingScreen } from '@/components/features/workspace/workspace-preparing-screen'
 import { ChatView } from '@/components/ui/chat/chat-view'
 import { MobileWorkspaceSelector } from '@/components/ui/chat/mobile-workspace-selector'
 import Curve from '@/components/ui/design/curve'
@@ -77,11 +79,21 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
 
   // Workspace and tab management
   const {
+    workspaces,
     selectedWorkspace,
     selectWorkspace,
     refreshWorkspaces,
     isInitialized: workspaceInitialized,
   } = useWorkspace()
+
+  const selectedStatus = (selectedWorkspace as { status?: string } | null)
+    ?.status
+  const showNoWorkspaces = workspaceInitialized && workspaces.length === 0
+  const showPreparingWorkspace =
+    workspaceInitialized &&
+    !!selectedWorkspace &&
+    selectedStatus !== undefined &&
+    selectedStatus !== 'healthy'
 
   // Handle workspaceId URL param (e.g. after accepting an invitation)
   const pendingWorkspaceIdRef = useRef<string | null>(null)
@@ -169,6 +181,35 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
     // Dispatch event to open the create file dialog
     window.dispatchEvent(new CustomEvent('createNewFile'))
   }, [])
+
+  if (showNoWorkspaces) {
+    return (
+      <m.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className='flex h-screen items-center justify-center bg-background text-foreground'>
+        <NoWorkspacesScreen />
+      </m.div>
+    )
+  }
+
+  if (showPreparingWorkspace && selectedWorkspace) {
+    return (
+      <m.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className='flex h-screen items-center justify-center bg-background text-foreground'>
+        <WorkspacePreparingScreen
+          workspaceId={selectedWorkspace.id}
+          status={
+            selectedStatus as 'starting' | 'unhealthy' | 'healthy' | undefined
+          }
+        />
+      </m.div>
+    )
+  }
 
   // Mobile-only view: Chat + Settings access
   if (isMobile) {
