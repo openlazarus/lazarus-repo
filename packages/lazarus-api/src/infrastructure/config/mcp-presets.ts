@@ -1120,11 +1120,22 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     category: 'developer',
     // Canva MCP Server - design creation, editing, and brand asset management
     // Uses remote MCP via HTTPS - connects to https://mcp.canva.com/mcp
-    // Canva's OAuth server rejects Dynamic Client Registration callback hosts,
-    // so each user must register their own OAuth integration in the Canva
-    // Developer Portal and supply the resulting client_id / client_secret.
-    // The integration's redirect URL must be set to:
-    //   https://api.thinklazarus.com/api/mcp/oauth/callback
+    //
+    // Auth model: mcp.canva.com runs its own OAuth server (issuer
+    // https://mcp.canva.com), separate from the Canva Connect API at api.canva.com.
+    // Its /authorize endpoint enforces a hard-coded host allowlist on redirect_uri:
+    // localhost (any port) and a small set of partner hosts (e.g. claude.ai) are
+    // accepted; arbitrary hosts return 400 "Invalid redirect URI. It must be from
+    // an allowed host." This allowlist is independent of what's accepted via DCR
+    // (registration succeeds but authorization fails) and is not influenced by
+    // OAuth integrations created in the Canva Developer Portal — those are for
+    // the Canva Connect API, not the MCP server.
+    //
+    // Practical consequence: hosted server-side OAuth via this preset cannot
+    // complete from api.thinklazarus.com today. End users who want Canva should
+    // connect it from a local MCP client (Claude Desktop, Cursor, etc.) via
+    // mcp-remote on localhost. To enable hosted use, Canva must add our host to
+    // the mcp.canva.com allowlist (vendor request).
     // https://www.canva.com/help/mcp-agent-setup/
     command: 'npx',
     args: ['-y', 'mcp-remote@latest', 'https://mcp.canva.com/mcp'],
@@ -1132,37 +1143,10 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     description:
       'Connect to Canva to create, edit, and manage designs, templates, and brand assets using natural language',
     env_schema: {
-      CANVA_CLIENT_ID: {
-        required: true,
-        secure: false,
-        type: 'text',
-        description:
-          'Client ID from your Canva developer integration (Developer Portal → Your integrations → Authentication)',
-        placeholder: 'OC-...',
-      },
-      CANVA_CLIENT_SECRET: {
-        required: true,
-        secure: true,
-        type: 'text',
-        description:
-          'Client Secret from your Canva developer integration (generated alongside the Client ID)',
-      },
+      // No required env vars - Canva uses browser-based OAuth authentication (DCR)
+      // Each user authenticates individually with Canva
     },
-    envSchema: {
-      CANVA_CLIENT_ID: {
-        required: true,
-        sensitive: false,
-        description:
-          'Client ID from your Canva developer integration (Developer Portal → Your integrations → Authentication)',
-        placeholder: 'OC-...',
-      },
-      CANVA_CLIENT_SECRET: {
-        required: true,
-        sensitive: true,
-        description:
-          'Client Secret from your Canva developer integration (generated alongside the Client ID)',
-      },
-    },
+    envSchema: {},
     config: {
       command: 'npx',
       args: ['-y', 'mcp-remote@latest', 'https://mcp.canva.com/mcp'],
@@ -1171,11 +1155,9 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     authType: 'oauth',
     oauth: {
       remoteUrl: 'https://mcp.canva.com/mcp',
-      clientIdEnvVar: 'CANVA_CLIENT_ID',
-      clientSecretEnvVar: 'CANVA_CLIENT_SECRET',
     },
     authInstructions:
-      "Create an integration in the Canva Developer Portal and add this redirect URL to it: https://api.thinklazarus.com/api/mcp/oauth/callback. Then enter the integration's Client ID and Client Secret here, save, and click Authorize.",
+      'Click the authorization link below to connect your Canva account. You will be redirected to Canva to grant access to your designs, templates, and brand assets.',
   },
 
   givebutter: {
