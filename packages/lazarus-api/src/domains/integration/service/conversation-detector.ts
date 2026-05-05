@@ -269,39 +269,6 @@ export class ConversationDetector implements IConversationDetector {
       options,
     )
   }
-  /**
-   * Build a formatted conversation history string for agent context.
-   * Returns empty string if no history or on error.
-   */
-  async buildConversationHistory(
-    platform: IntegrationPlatform,
-    conversationId: string,
-    options: { limit?: number } = {},
-  ): Promise<string> {
-    const limit = options.limit ?? 20
-
-    try {
-      const recentMessages = await this.getRecentMessages(platform, conversationId, limit)
-
-      if (recentMessages.length === 0) {
-        return ''
-      }
-
-      // Messages come in reverse chronological order, flip to chronological
-      const chronological = recentMessages.reverse()
-      const history = chronological
-        .map((msg) => {
-          const role = msg.isFromBot ? 'Lazarus' : msg.authorName || msg.authorId
-          return `${role}: ${msg.content}`
-        })
-        .join('\n')
-
-      return `[Conversation history]\n${history}\n[End of conversation history]\n\n`
-    } catch (error) {
-      log.error({ err: error }, `Error building conversation history:`)
-      return ''
-    }
-  }
 }
 
 // Export singleton instance with default config

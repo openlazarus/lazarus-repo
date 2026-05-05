@@ -139,6 +139,17 @@ export class LibrarianProcessorService {
               'mcp__memory-tools__memory_list_tags',
             ],
             permissionMode: 'bypassPermissions' as const,
+            // Minimal env for the SDK subprocess — librarian only uses the
+            // in-process memory-tools MCP server, so no DB/Stripe/JWT secrets
+            // need to leak into the spawned process.
+            env: {
+              PATH: process.env.PATH ?? '',
+              HOME: process.env.HOME ?? '',
+              ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
+              NODE_OPTIONS: process.env.NODE_OPTIONS ?? '',
+              NODE_ENV: process.env.NODE_ENV ?? '',
+              ENABLE_TOOL_SEARCH: 'auto:5',
+            },
           },
         })) {
           if (message.type === 'assistant') {

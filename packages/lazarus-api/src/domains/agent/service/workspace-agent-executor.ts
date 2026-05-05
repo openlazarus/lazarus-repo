@@ -32,6 +32,7 @@ import { BackgroundPermissionManager } from '@domains/permission/service/backgro
 import { approvalService } from '@domains/permission/service/approval.service'
 import { WorkspaceSandbox } from '@domains/permission/service/sandbox'
 import { createSandboxHook } from '@domains/permission/service/sandbox-hook'
+import { createTruncateToolResultsHook } from '@domains/permission/service/truncate-tool-results-hook'
 import * as crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import * as fs from 'fs/promises'
@@ -42,6 +43,7 @@ import { runInExecutionContext } from '@domains/execution/service/execution-cont
 import { executionAbortRegistry } from './execution-abort-registry'
 import type { IWorkspaceAgentExecutor } from './workspace-agent-executor.interface'
 import { withExecutionTag } from '@infrastructure/config/mcp-env'
+import { filterServerSecrets } from '@infrastructure/config/sdk-subprocess-env'
 import { buildMemoryBlock } from '@domains/knowledge/service/memory-prompt-builder'
 import {
   formatTranscript,
@@ -711,12 +713,14 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
                   ],
                 },
               ],
+              PostToolUse: [{ hooks: [createTruncateToolResultsHook(log) as any] }],
             },
             // Guardrails: hide never_allowed tools from the model entirely
             ...(disallowedTools.length > 0 ? { disallowedTools } : {}),
             env: withExecutionTag(
               {
-                ...process.env,
+                ...filterServerSecrets(process.env),
+                ENABLE_TOOL_SEARCH: 'auto:5',
                 PWD: actualWorkspacePath,
                 HOME: process.env.HOME || '/mnt/sdc',
                 WORKSPACE_PATH: actualWorkspacePath,
@@ -1318,6 +1322,7 @@ ${task}
           // Hooks: restrict file-path tools to workspace directory
           hooks: {
             PreToolUse: [{ hooks: [createSandboxHook(streamSandbox)] }],
+            PostToolUse: [{ hooks: [createTruncateToolResultsHook(log) as any] }],
           },
           // Guardrails: hide never_allowed tools from the model entirely
           ...(streamDisallowedTools.length > 0 ? { disallowedTools: streamDisallowedTools } : {}),

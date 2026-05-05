@@ -80,11 +80,4 @@ export interface IConversationDetector {
       lastMessageAt: Date
     }>
   >
-
-  /** Build a formatted conversation history string for agent context. */
-  buildConversationHistory(
-    platform: IntegrationPlatform,
-    conversationId: string,
-    options?: { limit?: number },
-  ): Promise<string>
 }

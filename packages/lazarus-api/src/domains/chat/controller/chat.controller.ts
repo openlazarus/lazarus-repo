@@ -12,6 +12,8 @@ import {
 } from '@domains/permission/service/risk-assessment'
 import { WorkspaceSandbox } from '@domains/permission/service/sandbox'
 import { createSandboxHook } from '@domains/permission/service/sandbox-hook'
+import { createTruncateToolResultsHook } from '@domains/permission/service/truncate-tool-results-hook'
+import { filterServerSecrets } from '@infrastructure/config/sdk-subprocess-env'
 import { conversationMetadata } from '@domains/conversation/service/conversation-metadata.service'
 import { resolveClaudeSessionJsonlPath } from '@domains/conversation/service/workspace-transcript-path'
 import { librarianProcessor } from '@background/librarian-processor.service'
@@ -423,11 +425,13 @@ ${specialistAgentsList}`
       },
       hooks: {
         PreToolUse: [{ hooks: [createSandboxHook(chatSandbox)] }],
+        PostToolUse: [{ hooks: [createTruncateToolResultsHook(log) as any] }],
       },
       ...(guardrailDisallowedTools.length > 0 ? { disallowedTools: guardrailDisallowedTools } : {}),
       settingSources: ['user', 'project'],
       env: {
-        ...process.env,
+        ...filterServerSecrets(process.env),
+        ENABLE_TOOL_SEARCH: 'auto:5',
         HOME: process.env.HOME || '/mnt/sdc',
         LAZARUS_CHAT_SESSION_ID: chatSessionTag,
       },

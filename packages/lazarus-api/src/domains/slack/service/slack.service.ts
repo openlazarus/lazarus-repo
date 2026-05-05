@@ -738,18 +738,17 @@ export class SlackService implements ISlackService {
     conversation: ConversationContext,
     threadTs?: string,
   ): Promise<string> {
-    const history =
-      !conversation.isNewConversation && conversation.messageCount > 0
-        ? await this.conversationDetector.buildConversationHistory('slack', conversation.id)
-        : null
-
+    const isContinuing = !conversation.isNewConversation && conversation.messageCount > 0
     const threadInstruction = threadTs ? ` and thread_ts="${threadTs}"` : ''
+    const historyHint = isContinuing
+      ? `\n\n---\nThis is part of an ongoing conversation in channel ${message.channelId}${threadTs ? ` (thread ${threadTs})` : ''}. If you need prior messages to respond well, fetch them with the \`fetch_slack_channel_history\` tool${threadTs ? ` or \`get_slack_thread_replies\`` : ''}. Otherwise reply to the latest message above.`
+      : null
+
     const context = [
-      history,
       `Slack message from ${message.userName || message.userId}:\n\n${message.text}`,
       attachments.length > 0 ? this.attachmentProcessor.buildAttachmentContext(attachments) : null,
-      !conversation.isNewConversation ? '\n\nReply to the latest message above.' : null,
-      `\n\n---\nIMPORTANT: You MUST reply to this Slack message using the send_slack_message tool with channel_id="${message.channelId}"${threadInstruction}. Always reply back to the user on Slack.\n\nIf you encounter ANY error or cannot complete the requested task, you MUST still send a Slack message to channel_id="${message.channelId}" explaining what went wrong. The user contacted you via Slack — they must always get a response on Slack, even if it's an error message.`,
+      historyHint,
+      `\n\n---\nReply via \`send_slack_message\` (channel_id="${message.channelId}"${threadInstruction}). On error, post the error there too — the user expects a Slack response either way.`,
     ]
       .filter(Boolean)
       .join('')
