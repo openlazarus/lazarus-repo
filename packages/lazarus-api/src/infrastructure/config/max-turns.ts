@@ -13,13 +13,13 @@ export const MAX_TURNS = {
   chat: env('MAX_TURNS_CHAT', 100),
 
   /** Slack integration */
-  slack: env('MAX_TURNS_SLACK', 100),
+  slack: env('MAX_TURNS_SLACK', 40),
 
   /** Discord integration */
-  discord: env('MAX_TURNS_DISCORD', 100),
+  discord: env('MAX_TURNS_DISCORD', 40),
 
-  /** Agent-to-agent chat tool */
-  agentChat: env('MAX_TURNS_AGENT_CHAT', 100),
+  /** Agent-to-agent chat tool (delegate_task child sessions) */
+  agentChat: env('MAX_TURNS_AGENT_CHAT', 25),
 
   /** Direct agent execution (workspace-agent-executor.ts) */
   executor: env('MAX_TURNS_EXECUTOR', 100),

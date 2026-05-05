@@ -27,7 +27,7 @@ function envInt(key: string, fallback: number): number {
 function loadConfig(): ExecutionLimitsConfig {
   return Object.freeze({
     maxConcurrentExecutions: envInt('MAX_CONCURRENT_EXECUTIONS', 8),
-    maxCascadeDepth: envInt('MAX_CASCADE_DEPTH', 3),
+    maxCascadeDepth: envInt('MAX_CASCADE_DEPTH', 1),
     maxQueuedItems: envInt('MAX_QUEUED_ITEMS', 50),
     askAgentModel: env('ASK_AGENT_MODEL', 'claude-sonnet-4-20250514'),
     askAgentMaxTokens: envInt('ASK_AGENT_MAX_TOKENS', 4096),
