@@ -1,8 +1,6 @@
 import { createLogger } from '@utils/logger'
 import type { IEmailConversationRepository } from '@domains/email/repository/email-conversation.repository.interface'
 import { emailConversationRepository } from '@domains/email/repository/email-conversation.repository'
-import { summarizeConversation } from '@domains/conversation/service/conversation-summary.service'
-import type { ConversationMessage } from '../../conversation/types/conversation.types'
 import type {
   ConversationRow,
   ConversationContext,
@@ -224,30 +222,6 @@ export class EmailConversationService implements IEmailConversationService {
     }
 
     return lines.join('\n')
-  }
-
-  /**
-   * Build an AI-generated summary of an email conversation for prompt injection.
-   * Falls back to last 5 messages if summarization fails.
-   */
-  async buildConversationSummary(
-    conversationId: string,
-    options: { limit?: number } = {},
-  ): Promise<{ summary: string; senderLabel: string }> {
-    const messages = await this.repo.getMessages(conversationId, options.limit || 20)
-    if (messages.length === 0) return { summary: '', senderLabel: '' }
-
-    const firstInbound = messages.find((m) => !m.is_from_bot)
-    const senderLabel = firstInbound?.sender_email || 'the sender'
-
-    const conversationMessages: ConversationMessage[] = messages.map((msg) => ({
-      speaker: msg.is_from_bot ? 'You' : msg.sender_name || msg.sender_email,
-      content: msg.content || '[no content]',
-      timestamp: new Date(msg.created_at).toISOString().replace('T', ' ').substring(0, 16),
-    }))
-
-    const summary = await summarizeConversation(conversationMessages)
-    return { summary, senderLabel }
   }
 
   /**

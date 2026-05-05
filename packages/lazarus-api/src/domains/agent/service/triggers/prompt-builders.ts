@@ -1,12 +1,6 @@
 import type { AgentTrigger } from '@domains/agent/types/trigger.types'
-import { agentWhatsAppStorage } from '@domains/whatsapp/repository/agent-whatsapp-storage'
-import { emailConversationService } from '@domains/email/service/email-conversation.service'
 import { generateConversationTitle } from '@domains/conversation/service/conversation-title.service'
-import { summarizeConversation } from '@domains/conversation/service/conversation-summary.service'
-import type { ConversationMessage } from '../../../conversation/types/conversation.types'
 import type { PromptBuildResult } from '@domains/agent/types/agent.types'
-import { createLogger } from '@utils/logger'
-const log = createLogger('prompt-builders')
 
 interface PromptBuilderContext {
   trigger: AgentTrigger
@@ -58,39 +52,18 @@ const buildEmailPrompt: PromptBuilder = async ({ triggerData, triggerTask }) => 
     messageId: triggerData.messageId,
   }
 
-  // If this is a reply, load conversation summary instead of full history
-  let conversationSummaryBlock = ''
-  if (triggerData.emailConversationId && triggerData.isReply) {
-    try {
-      const { summary, senderLabel } = await emailConversationService.buildConversationSummary(
-        triggerData.emailConversationId,
-        { limit: 20 },
-      )
-      if (summary) {
-        conversationSummaryBlock = [
-          '## Conversation Summary',
-          `You have been exchanging emails with ${senderLabel}. Here is a summary of the conversation:\n`,
-          summary,
-          `\n> If you need the full email thread, use the \`email_conversation_history\` tool with conversationId="${triggerData.emailConversationId}".`,
-        ].join('\n')
-      }
-    } catch (err) {
-      log.error({ err: err }, 'Failed to load email conversation summary')
-    }
-  }
-
   const messageId = triggerData.messageId as string | undefined
 
   let emailBody = `Email received from ${from}:\n\nSubject: ${subject}\n\n${body}`
-  if (conversationSummaryBlock) {
-    emailBody = `${conversationSummaryBlock}\n---\n\n## New Email\n${emailBody}`
+  if (triggerData.emailConversationId && triggerData.isReply) {
+    emailBody += `\n\n---\nThis is a reply in an ongoing thread (conversationId="${triggerData.emailConversationId}"). If you need prior messages to respond well, fetch them with the \`email_conversation_history\` tool. Otherwise answer the new email above directly.`
   }
 
   const replyInstruction = messageId
     ? `If you determine a reply is appropriate, use the email_reply tool with messageId="${messageId}" to respond to the sender.`
     : `If you determine a reply is appropriate, use the email_list tool first to find the messageId, then use email_reply to respond.`
 
-  emailBody += `\n\n---\n${replyInstruction}\n\nIMPORTANT: Do NOT use markdown formatting in your email replies. Emails do not render markdown. Instead use plain text formatting: blank lines for paragraphs, dashes for lists, and UPPERCASE or *asterisks* sparingly for emphasis.`
+  emailBody += `\n\n---\n${replyInstruction}\n\nNo markdown in email body — use plain text (blank lines for paragraphs, dashes for lists, UPPERCASE or *asterisks* for emphasis).`
 
   const prompt = prependTask(emailBody, triggerTask)
 
@@ -113,28 +86,18 @@ const buildEmailPrompt: PromptBuilder = async ({ triggerData, triggerTask }) => 
   }
 }
 
-const buildWhatsAppPrompt: PromptBuilder = async ({ trigger, triggerData, triggerTask }) => {
+const buildWhatsAppPrompt: PromptBuilder = async ({ triggerData, triggerTask }) => {
   const senderPhone = triggerData.from as string
   const senderName = (triggerData.senderName || senderPhone) as string
   const messageText = (triggerData.textContent ||
     triggerData.caption ||
     '[media message]') as string
 
-  // Load recent conversation and summarize it instead of dumping raw history
-  const conversationSummary = await loadWhatsAppSummary(
-    trigger.agentId,
-    trigger.workspaceId,
-    senderPhone,
-    senderName,
-    triggerData.messageId,
-  )
-
   let body = `WhatsApp message from ${senderName} (${senderPhone}):\n\n${messageText}`
-  if (conversationSummary) {
-    body = `${conversationSummary}\n---\n\n## New Message\n${body}`
-  }
 
-  body += `\n\n---\nIMPORTANT: You MUST reply to this WhatsApp message using the whatsapp_send tool with to="${senderPhone}". Always reply back to the user.\n\nIf you encounter ANY error or cannot complete the requested task, you MUST still send a WhatsApp message to ${senderPhone} explaining what went wrong and what needs to happen to fix it. The user contacted you via WhatsApp — they must always get a response on WhatsApp, even if it's an error message. Never just log the error internally without notifying the user on WhatsApp.`
+  body += `\n\n---\nIf you need prior messages with this contact to respond well, fetch them with the \`whatsapp_conversation_history\` tool (contactPhone="${senderPhone}"). Otherwise answer the new message above directly.`
+
+  body += `\n\n---\nReply via \`whatsapp_send\` (to="${senderPhone}"). On error, send the error message there too — the user expects a WhatsApp response either way.`
 
   const prompt = prependTask(body, triggerTask)
 
@@ -157,60 +120,6 @@ const buildWhatsAppPrompt: PromptBuilder = async ({ trigger, triggerData, trigge
       senderPhone: triggerData.senderPhone || triggerData.from,
     },
     userMessage: messageText,
-  }
-}
-
-// ---------------------------------------------------------------------------
-// WhatsApp history helper
-// ---------------------------------------------------------------------------
-
-const HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000 // 24 hours
-const MAX_HISTORY_MESSAGES = 50
-
-async function loadWhatsAppSummary(
-  agentId: string,
-  workspaceId: string,
-  senderPhone: string,
-  senderName: string,
-  currentMessageId?: string,
-): Promise<string> {
-  try {
-    const since = Date.now() - HISTORY_WINDOW_MS
-
-    const allMessages = await agentWhatsAppStorage.listMessages(agentId, workspaceId, {
-      contact: senderPhone,
-      since,
-      limit: MAX_HISTORY_MESSAGES,
-    })
-
-    const recentMessages = allMessages
-      .filter((m) => m.id !== currentMessageId)
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-
-    if (recentMessages.length === 0) return ''
-
-    const conversationMessages: ConversationMessage[] = recentMessages.map((msg) => ({
-      speaker: msg.metadata.direction === 'outbound' ? 'You' : senderName,
-      content: msg.textContent || msg.media?.caption || `[${msg.type}]`,
-      timestamp: new Date(msg.timestamp).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    }))
-
-    const summary = await summarizeConversation(conversationMessages)
-
-    const lines = [
-      '## Conversation Summary',
-      `You have been chatting with ${senderName} (${senderPhone}). Here is a summary of your recent conversation:\n`,
-      summary,
-      `\n> If you need the full conversation history, use the \`whatsapp_conversation_history\` tool with contactPhone="${senderPhone}".`,
-    ]
-
-    return lines.join('\n')
-  } catch (error) {
-    log.error({ err: error }, 'Failed to load WhatsApp conversation summary')
-    return ''
   }
 }
 

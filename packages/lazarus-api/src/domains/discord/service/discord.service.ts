@@ -538,14 +538,6 @@ export class DiscordService implements IDiscordService {
   ): Promise<string> {
     let context = ''
 
-    // Include actual conversation history if continuing
-    if (!conversation.isNewConversation && conversation.messageCount > 0) {
-      context += await this.conversationDetector.buildConversationHistory(
-        'discord',
-        conversation.id,
-      )
-    }
-
     if (message.referencedContent) {
       context += `${message.authorName} is replying to a message from ${message.referencedAuthorName || 'unknown'}:\n\n${message.referencedContent}\n\n---\n`
     }
@@ -557,11 +549,11 @@ export class DiscordService implements IDiscordService {
       context += this.attachmentProcessor.buildAttachmentContext(attachments)
     }
 
-    if (!conversation.isNewConversation) {
-      context += '\n\nReply to the latest message above.'
+    if (!conversation.isNewConversation && conversation.messageCount > 0) {
+      context += `\n\n---\nThis is part of an ongoing conversation in channel ${message.channelId}. If you need prior messages to respond well, fetch them with the \`fetch_discord_channel_history\` tool. Otherwise reply to the latest message above.`
     }
 
-    context += `\n\n---\nIMPORTANT: You MUST reply to this Discord message using the send_discord_message tool with channel_id="${message.channelId}". Always reply back to the user on Discord.\n\nIf you encounter ANY error or cannot complete the requested task, you MUST still send a Discord message to channel_id="${message.channelId}" explaining what went wrong. The user contacted you via Discord — they must always get a response on Discord, even if it's an error message.`
+    context += `\n\n---\nReply via \`send_discord_message\` (channel_id="${message.channelId}"). On error, post the error there too — the user expects a Discord response either way.`
 
     return context
   }

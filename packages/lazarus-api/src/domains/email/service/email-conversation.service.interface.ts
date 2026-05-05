@@ -19,12 +19,6 @@ export interface IEmailConversationService {
   /** Build formatted conversation history for agent prompt injection. */
   buildConversationHistory(conversationId: string, options?: { limit?: number }): Promise<string>
 
-  /** Build an AI-generated summary of an email conversation. */
-  buildConversationSummary(
-    conversationId: string,
-    options?: { limit?: number },
-  ): Promise<{ summary: string; senderLabel: string }>
-
   /** Get RFC 2822 threading headers for composing an outbound reply. */
   getThreadHeaders(conversationId: string): Promise<ThreadHeaders>
 }

@@ -2,16 +2,8 @@
  * Shared types for conversation, session, and context-building services.
  */
 
-/** Transcript line for conversation summarization (speaker-labeled). */
-export interface ConversationMessage {
-  speaker: string
-  content: string
-  timestamp: string
-}
-
 /**
  * Global agent WhatsApp history.json entries (role-based, optional tool round data).
- * Distinct from {@link ConversationMessage} used for summarization.
  */
 export interface GlobalAgentConversationMessage {
   role: 'user' | 'assistant'
