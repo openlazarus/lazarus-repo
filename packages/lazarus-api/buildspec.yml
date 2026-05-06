@@ -1,0 +1,23 @@
+version: 0.2
+
+env:
+  variables:
+    ECR_REPOSITORY: lazarus-api
+
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - if [ "$CODEBUILD_WEBHOOK_HEAD_REF" = "refs/heads/staging" ]; then TAG=staging; else TAG=latest; fi
+      - SHA=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-12)
+      - echo "Building tag $TAG and $SHA from ref $CODEBUILD_WEBHOOK_HEAD_REF"
+
+  build:
+    commands:
+      - docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG -f packages/lazarus-api/Dockerfile packages/lazarus-api
+      - docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$TAG $ECR_REGISTRY/$ECR_REPOSITORY:$SHA
+
+  post_build:
+    commands:
+      - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+      - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHA
