@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    lint:
+      glob: "*.{js,jsx,ts,tsx,css,scss,md,json,html}"
+      run: npm run precommit

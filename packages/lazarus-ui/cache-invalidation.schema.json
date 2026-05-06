@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cache Invalidation Configuration",
+  "description": "Schema for cache invalidation rules configuration",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the configuration"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Configuration version in semver format"
+    },
+    "rules": {
+      "type": "array",
+      "description": "Array of cache invalidation rules",
+      "items": {
+        "$ref": "#/definitions/Rule"
+      }
+    },
+    "crossDomainHandlers": {
+      "type": "object",
+      "description": "Cross-domain invalidation handler definitions",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9]*$": {
+          "$ref": "#/definitions/CrossDomainHandler"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the configuration",
+      "properties": {
+        "lastUpdated": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when configuration was last updated"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Team or person responsible for maintaining this configuration"
+        },
+        "documentation": {
+          "type": "string",
+          "description": "Path to documentation file"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": ["version", "rules"],
+  "additionalProperties": false,
+  "definitions": {
+    "Rule": {
+      "type": "object",
+      "description": "A cache invalidation rule",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9-_]*$",
+          "description": "Unique identifier for the rule (alphanumeric, hyphens, underscores)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this rule does"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern to match cache keys for invalidation"
+        },
+        "tables": {
+          "type": "array",
+          "description": "Database tables that trigger this rule",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "operations": {
+          "type": "array",
+          "description": "Database operations that trigger this rule",
+          "items": {
+            "type": "string",
+            "enum": ["insert", "update", "delete"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "crossDomainInvalidation": {
+          "oneOf": [
+            {
+              "type": "null",
+              "description": "No cross-domain invalidation needed"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
+              "description": "Name of the cross-domain handler function"
+            }
+          ]
+        }
+      },
+      "required": ["name", "pattern", "tables", "operations"],
+      "additionalProperties": false
+    },
+    "CrossDomainHandler": {
+      "type": "object",
+      "description": "Cross-domain invalidation handler definition",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of what this handler does"
+        },
+        "affectedDomains": {
+          "type": "array",
+          "description": "List of domains affected by this handler",
+          "items": {
+            "type": "string",
+            "enum": [
+              "files",
+              "conversations",
+              "apps",
+              "messages",
+              "workspaces",
+              "labels",
+              "tags"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "filterType": {
+          "type": "string",
+          "description": "Type of filter that this handler manages",
+          "examples": ["labels", "tags", "categories", "status"]
+        }
+      },
+      "required": ["affectedDomains", "filterType"],
+      "additionalProperties": false
+    }
+  }
+}

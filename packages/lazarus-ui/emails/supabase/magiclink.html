@@ -1,0 +1,475 @@
+<!doctype html>
+<html
+  lang="en"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Your Lazarus Verification Code</title>
+    <!--[if mso]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+    <style>
+      /* Reset and base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: light dark;
+        supported-color-schemes: light dark;
+      }
+
+      body {
+        font-family: 'Helvetica', Arial, sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+
+      .wrapper {
+        width: 100%;
+        table-layout: fixed;
+        background-color: #f5f5f5;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+
+      /* Dark mode styles */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #1a1a1a !important;
+        }
+
+        .wrapper {
+          background-color: #1a1a1a !important;
+        }
+
+        .email-container {
+          background-color: #000000 !important;
+          color: #ffffff !important;
+        }
+
+        h1,
+        h2,
+        h3,
+        p,
+        div,
+        span,
+        td {
+          color: #ffffff !important;
+        }
+
+        .greeting {
+          color: #ffffff !important;
+        }
+
+        .message {
+          color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .otp-code {
+          color: #ffffff !important;
+        }
+
+        .footer-text {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      }
+
+      /* Outlook-specific dark mode */
+      [data-ogsc] .email-container {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+      }
+
+      [data-ogsc] h1,
+      [data-ogsc] h2,
+      [data-ogsc] h3,
+      [data-ogsc] p,
+      [data-ogsc] div,
+      [data-ogsc] span,
+      [data-ogsc] td {
+        color: #ffffff !important;
+      }
+
+      /* Header - minimal like footer */
+      .header {
+        padding: 48px 32px;
+        border-bottom: 1px solid #e5e5e5;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: -0.05em;
+        font-family: 'Helvetica', Arial, sans-serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .header {
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .logo {
+          color: #ffffff !important;
+        }
+      }
+
+      .logo-sup {
+        font-size: 12px;
+        font-weight: 400;
+      }
+
+      /* Main content */
+      .content {
+        padding: 48px 32px;
+      }
+
+      .greeting {
+        font-size: 20px;
+        font-weight: 500;
+        color: #1a1a1a;
+        margin-bottom: 24px;
+        letter-spacing: -0.01em;
+      }
+
+      .message {
+        font-size: 16px;
+        color: #666666;
+        line-height: 1.6;
+        margin-bottom: 32px;
+        font-weight: 300;
+      }
+
+      /* OTP Code Display - minimal style */
+      .otp-container {
+        padding: 32px 0;
+        border-top: 1px solid #e5e5e5;
+        border-bottom: 1px solid #e5e5e5;
+        margin: 32px 0;
+      }
+
+      .otp-label {
+        font-size: 14px;
+        color: #666666;
+        font-weight: 300;
+        margin-bottom: 16px;
+      }
+
+      .otp-code {
+        font-size: 36px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 12px;
+        font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+        margin-bottom: 16px;
+      }
+
+      .otp-note {
+        font-size: 12px;
+        color: #999999;
+        font-weight: 300;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .greeting {
+          color: #ffffff !important;
+        }
+
+        .message {
+          color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .otp-container {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .otp-label {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .otp-code {
+          color: #ffffff !important;
+        }
+
+        .otp-note {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+      }
+
+      /* Magic Link */
+      .magic-link-divider {
+        margin: 24px 0;
+        font-size: 14px;
+        color: #999999;
+        font-weight: 300;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .magic-link-divider {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+      }
+
+      .magic-link {
+        color: #0098fc !important;
+        text-decoration: none;
+        font-size: 14px;
+        transition: opacity 0.3s ease;
+      }
+
+      .magic-link:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+      }
+
+      /* Ensure link color consistency */
+      a {
+        color: #0098fc !important;
+      }
+
+      .info-section {
+        padding: 24px 0;
+        border-top: 1px solid #e5e5e5;
+        margin-top: 32px;
+      }
+
+      .info-section h3 {
+        font-size: 14px;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+
+      .info-section p {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 16px 0;
+        font-weight: 300;
+        line-height: 1.5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .info-section {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .info-section h3 {
+          color: #ffffff !important;
+        }
+
+        .info-section p {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      }
+
+      .step-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .step-list li {
+        padding: 4px 0;
+        font-size: 14px;
+        color: #666666;
+        font-weight: 300;
+        line-height: 1.5;
+      }
+
+      .step-list li::before {
+        content: counter(step-counter) '. ';
+        counter-increment: step-counter;
+        color: #666666;
+        font-weight: 300;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .step-list li {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .step-list li::before {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      }
+
+      .info-section {
+        counter-reset: step-counter;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 32px;
+        border-top: 1px solid #e5e5e5;
+      }
+
+      .footer-text {
+        font-size: 12px;
+        color: #999999;
+        line-height: 1.5;
+        margin-bottom: 16px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .footer {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .footer-text {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+      }
+
+      .footer-links {
+        font-size: 12px;
+      }
+
+      .footer-links a {
+        color: #0098fc;
+        text-decoration: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+      }
+
+      /* Responsive design */
+      @media only screen and (max-width: 600px) {
+        .header,
+        .content,
+        .footer {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+
+        .greeting {
+          font-size: 18px;
+        }
+
+        .message {
+          font-size: 14px;
+        }
+
+        .otp-code {
+          font-size: 28px;
+          letter-spacing: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0">
+    <!--[if mso | IE]>
+    <table align="center" border="0" cellpadding="0" cellspacing="0" class="wrapper" role="presentation" style="width:100%;">
+        <tr>
+            <td>
+    <![endif]-->
+    <div
+      class="wrapper"
+      style="width: 100%; table-layout: fixed; background-color: #f5f5f5">
+      <div
+        class="email-container"
+        style="max-width: 600px; margin: 0 auto; background-color: #ffffff">
+        <!-- Header -->
+        <div class="header">
+          <div class="logo">Lazarus, the memory cloud.</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+          <h1 class="greeting">Your verification code</h1>
+
+          <p class="message">
+            To complete your sign-in to Lazarus, please enter the verification
+            code below in your browser or click the magic link.
+          </p>
+
+          <!-- OTP Code Display -->
+          <div class="otp-container">
+            <div class="otp-label">Verification Code</div>
+            <div class="otp-code">{{ .Token }}</div>
+            <div class="otp-note">Enter this code to continue</div>
+          </div>
+
+          <!-- Magic Link Option -->
+          <div class="magic-link-divider">
+            Or
+            <a href="{{ .ConfirmationURL }}" class="magic-link"
+              >use the magic link</a
+            >
+          </div>
+
+          <div class="info-section">
+            <h3>Instructions</h3>
+            <ol class="step-list">
+              <li>Click the magic link above for instant access, OR</li>
+              <li>Return to the Lazarus sign-in page in your browser</li>
+              <li>Enter the verification code exactly as shown above</li>
+              <li>Click "Verify" to access your dashboard</li>
+            </ol>
+          </div>
+
+          <div class="info-section">
+            <h3>Security Information</h3>
+            <p>
+              This verification code and magic link will expire in 10 minutes
+              for your security.
+            </p>
+            <p>
+              Never share this code or link with anyone. Lazarus Labs LLC will
+              never ask for your verification code via phone, email, or other
+              channels.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <p class="footer-text">
+            This verification code was sent to {{ .Email }} for your Lazarus
+            account.<br />
+            If you didn't request this code, please contact our security team
+            immediately.
+          </p>
+          <div class="footer-links">
+            <a href="https://openlazarus.ai">Visit website</a>
+            <span style="color: rgba(255, 255, 255, 0.3); margin: 0 8px"
+              >•</span
+            >
+            <a href="https://openlazarus.ai/privacy">Privacy policy</a>
+            <span style="color: rgba(255, 255, 255, 0.3); margin: 0 8px"
+              >•</span
+            >
+            <a href="https://openlazarus.ai/security">Security center</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--[if mso | IE]>
+            </td>
+        </tr>
+    </table>
+    <![endif]-->
+  </body>
+</html>

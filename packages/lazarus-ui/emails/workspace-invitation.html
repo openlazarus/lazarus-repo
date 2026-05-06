@@ -1,0 +1,386 @@
+<!doctype html>
+<html
+  lang="en"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>You've been invited to collaborate on {{workspaceName}}</title>
+    <style>
+      /* Reset and base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: light dark;
+        supported-color-schemes: light dark;
+      }
+
+      body {
+        font-family: 'Helvetica', Arial, sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+
+      .wrapper {
+        width: 100%;
+        table-layout: fixed;
+        background-color: #f5f5f5;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+
+      /* Dark mode styles */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #1a1a1a !important;
+        }
+
+        .wrapper {
+          background-color: #1a1a1a !important;
+        }
+
+        .email-container {
+          background-color: #000000 !important;
+          color: #ffffff !important;
+        }
+
+        h1,
+        h2,
+        h3,
+        p,
+        div,
+        span,
+        td {
+          color: #ffffff !important;
+        }
+
+        .greeting {
+          color: #ffffff !important;
+        }
+
+        .message {
+          color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .footer-text {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      }
+
+      /* Outlook-specific dark mode */
+      [data-ogsc] .email-container {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+      }
+
+      [data-ogsc] h1,
+      [data-ogsc] h2,
+      [data-ogsc] h3,
+      [data-ogsc] p,
+      [data-ogsc] div,
+      [data-ogsc] span,
+      [data-ogsc] td {
+        color: #ffffff !important;
+      }
+
+      /* Header */
+      .header {
+        padding: 48px 32px;
+        border-bottom: 1px solid #e5e5e5;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: -0.05em;
+        font-family: 'Helvetica', Arial, sans-serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .header {
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .logo {
+          color: #ffffff !important;
+        }
+      }
+
+      /* Main content */
+      .content {
+        padding: 48px 32px;
+      }
+
+      .greeting {
+        font-size: 20px;
+        font-weight: 500;
+        color: #1a1a1a;
+        margin-bottom: 24px;
+        letter-spacing: -0.01em;
+      }
+
+      .message {
+        font-size: 16px;
+        color: #666666;
+        line-height: 1.6;
+        margin-bottom: 32px;
+        font-weight: 300;
+      }
+
+      /* Invitation Details */
+      .invitation-box {
+        padding: 32px 0;
+        border-top: 1px solid #e5e5e5;
+        border-bottom: 1px solid #e5e5e5;
+        margin: 32px 0;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .invitation-box {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+          border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+
+      .invitation-label {
+        font-size: 12px;
+        color: #999999;
+        font-weight: 300;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+
+      .invitation-value {
+        font-size: 18px;
+        font-weight: 500;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .invitation-label {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .invitation-value {
+          color: #ffffff !important;
+        }
+      }
+
+      /* CTA Button */
+      .cta-container {
+        text-align: center;
+        margin: 32px 0;
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 16px 48px;
+        background-color: #0098fc;
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 500;
+        font-size: 16px;
+        transition: opacity 0.3s ease;
+      }
+
+      .cta-button:hover {
+        opacity: 0.9;
+      }
+
+      .info-section {
+        padding: 24px 0;
+        border-top: 1px solid #e5e5e5;
+        margin-top: 32px;
+      }
+
+      .info-section h3 {
+        font-size: 14px;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+
+      .info-section p {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 16px 0;
+        font-weight: 300;
+        line-height: 1.5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .info-section {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .info-section h3 {
+          color: #ffffff !important;
+        }
+
+        .info-section p {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      }
+
+      /* Footer */
+      .footer {
+        padding: 32px;
+        border-top: 1px solid #e5e5e5;
+      }
+
+      .footer-text {
+        font-size: 12px;
+        color: #999999;
+        line-height: 1.5;
+        margin-bottom: 16px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .footer {
+          border-top-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .footer-text {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+      }
+
+      .footer-links {
+        font-size: 12px;
+      }
+
+      .footer-links a {
+        color: #0098fc;
+        text-decoration: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+      }
+
+      /* Responsive design */
+      @media only screen and (max-width: 600px) {
+        .header,
+        .content,
+        .footer {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+
+        .greeting {
+          font-size: 18px;
+        }
+
+        .message {
+          font-size: 14px;
+        }
+
+        .cta-button {
+          padding: 14px 32px;
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0">
+    <div
+      class="wrapper"
+      style="width: 100%; table-layout: fixed; background-color: #f5f5f5">
+      <div
+        class="email-container"
+        style="max-width: 600px; margin: 0 auto; background-color: #ffffff">
+        <!-- Header -->
+        <div class="header">
+          <div class="logo">Lazarus, the memory cloud.</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+          <h1 class="greeting">You've been invited to collaborate!</h1>
+
+          <p class="message">
+            {{inviterName}} has invited you to collaborate on
+            <strong>{{workspaceName}}</strong> on Lazarus. Accept this
+            invitation to start working together.
+          </p>
+
+          <!-- Invitation Details -->
+          <div class="invitation-box">
+            <div class="invitation-label">Workspace</div>
+            <div class="invitation-value">{{workspaceName}}</div>
+
+            <div class="invitation-label">Your Role</div>
+            <div class="invitation-value">{{role}}</div>
+          </div>
+
+          <!-- CTA Button -->
+          <div class="cta-container">
+            <a href="{{acceptUrl}}" class="cta-button"> Accept Invitation </a>
+          </div>
+
+          <div class="info-section">
+            <h3>What happens next?</h3>
+            <p>
+              After accepting this invitation, you'll have access to collaborate
+              on shared files, documents, and projects within this workspace.
+            </p>
+            <p>
+              If you don't have a Lazarus account yet, you'll be guided through
+              a quick sign-up process.
+            </p>
+          </div>
+
+          <div class="info-section">
+            <h3>Security Information</h3>
+            <p>This invitation link will expire in 7 days for your security.</p>
+            <p>
+              If you didn't expect this invitation or believe it was sent in
+              error, please ignore this email or contact our support team.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <p class="footer-text">
+            This invitation was sent to {{inviteeEmail}} by {{inviterEmail}}.<br />
+            If you have any questions, feel free to reach out to the person who
+            invited you.
+          </p>
+          <div class="footer-links">
+            <a href="https://openlazarus.ai">Visit website</a>
+            <span style="color: rgba(255, 255, 255, 0.3); margin: 0 8px"
+              >•</span
+            >
+            <a href="https://openlazarus.ai/privacy">Privacy policy</a>
+            <span style="color: rgba(255, 255, 255, 0.3); margin: 0 8px"
+              >•</span
+            >
+            <a href="https://openlazarus.ai/support">Support</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

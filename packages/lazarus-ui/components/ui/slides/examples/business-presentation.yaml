@@ -1,0 +1,422 @@
+# Executive Business Review - Q4 2024
+# This presentation demonstrates all business-focused slide types
+
+presentation:
+  meta:
+    title: "Q4 2024 Business Review"
+    author: "Executive Team"
+    date: "2024-01-15"
+    theme: keynote
+    aspectRatio: "16:9"
+    
+  defaults:
+    transition: fade
+    duration: 0.5
+    
+  slides:
+    # Opening
+    - type: title
+      title: "Q4 2024 Business Review"
+      subtitle: "Performance • Growth • Strategy"
+      background:
+        type: gradient
+        value: gradient-blue
+      notes: "Welcome everyone to our quarterly business review."
+      
+    # Agenda
+    - type: agenda
+      title: "Today's Agenda"
+      sections:
+        - time: "2:00 PM"
+          title: "Welcome & Overview"
+          duration: "10 min"
+          speaker: "Sarah Chen, CEO"
+          
+        - time: "2:10 PM"
+          title: "Financial Performance"
+          duration: "20 min"
+          speaker: "Michael Torres, CFO"
+          description: "Q4 results and yearly summary"
+          
+        - time: "2:30 PM"
+          title: "Product Updates"
+          duration: "25 min"
+          speaker: "Lisa Park, CPO"
+          description: "New features and roadmap"
+          
+        - time: "2:55 PM"
+          title: "Market Analysis"
+          duration: "15 min"
+          speaker: "David Kumar, CMO"
+          
+        - time: "3:10 PM"
+          title: "2025 Strategy"
+          duration: "20 min"
+          speaker: "Sarah Chen, CEO"
+          
+        - time: "3:30 PM"
+          title: "Q&A Session"
+          duration: "30 min"
+          
+    # Key Metrics Dashboard
+    - type: metrics
+      title: "Q4 Performance Highlights"
+      subtitle: "Key Performance Indicators"
+      metrics:
+        - label: "Revenue"
+          value: "$24.5M"
+          change:
+            value: 28
+            type: increase
+          icon: "💰"
+          description: "vs. Q3 2024"
+          
+        - label: "Active Users"
+          value: "125K"
+          change:
+            value: 15
+            type: increase
+          icon: "👥"
+          description: "Monthly active users"
+          
+        - label: "NPS Score"
+          value: 72
+          change:
+            value: 5
+            type: increase
+          icon: "⭐"
+          description: "Net Promoter Score"
+          
+        - label: "Churn Rate"
+          value: "2.3%"
+          change:
+            value: 0.5
+            type: decrease
+          icon: "📉"
+          description: "Monthly churn"
+          
+        - label: "ARR"
+          value: "$98M"
+          change:
+            value: 35
+            type: increase
+          icon: "📈"
+          description: "Annual Recurring Revenue"
+          
+        - label: "Team Size"
+          value: 450
+          change:
+            value: 20
+            type: increase
+          icon: "🏢"
+          description: "Full-time employees"
+          
+    # Revenue Chart
+    - type: data-viz
+      title: "Revenue Growth"
+      subtitle: "Quarterly Performance (in millions)"
+      data:
+        type: bar
+        labels: ["Q1", "Q2", "Q3", "Q4"]
+        datasets:
+          - label: "2023"
+            data: [15.2, 16.8, 17.5, 19.1]
+            backgroundColor: "#86868b"
+            
+          - label: "2024"
+            data: [18.5, 20.2, 22.8, 24.5]
+            backgroundColor: "#007AFF"
+            
+        options:
+          showLegend: true
+          animate: true
+          
+    # Growth Trend
+    - type: data-viz
+      title: "User Growth Trajectory"
+      subtitle: "Monthly Active Users (thousands)"
+      data:
+        type: line
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        datasets:
+          - label: "2024 Actual"
+            data: [85, 88, 92, 95, 98, 102, 105, 110, 115, 118, 122, 125]
+            borderColor: "#007AFF"
+            
+          - label: "2024 Target"
+            data: [85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140]
+            borderColor: "#34C759"
+            
+        options:
+          showGrid: true
+          
+    # Market Share
+    - type: data-viz
+      title: "Market Share Analysis"
+      subtitle: "Enterprise Segment"
+      data:
+        type: pie
+        labels: ["Our Company", "Competitor A", "Competitor B", "Others"]
+        datasets:
+          - data: [32, 28, 24, 16]
+            backgroundColor: ["#007AFF", "#FF3B30", "#FF9500", "#8E8E93"]
+            
+    # Performance Table
+    - type: table
+      title: "Regional Performance"
+      subtitle: "Q4 2024 Results"
+      data:
+        headers: ["Region", "Revenue", "Growth", "Users", "NPS"]
+        rows:
+          - ["North America", "$12.5M", "+32%", "58K", 75]
+          - ["Europe", "$7.8M", "+28%", "42K", 71]
+          - ["Asia Pacific", "$3.2M", "+45%", "20K", 68]
+          - ["Latin America", "$1.0M", "+62%", "5K", 74]
+        style:
+          striped: true
+          hover: true
+        highlights: [2]  # Highlight Asia Pacific row
+        
+    # Product Roadmap Timeline
+    - type: timeline
+      title: "2024-2025 Product Roadmap"
+      events:
+        - date: "Q1 2024"
+          title: "Mobile App Launch"
+          description: "iOS and Android apps released"
+          icon: "📱"
+          
+        - date: "Q2 2024"
+          title: "AI Features Beta"
+          description: "Machine learning capabilities introduced"
+          icon: "🤖"
+          milestone: true
+          
+        - date: "Q3 2024"
+          title: "Enterprise Plan"
+          description: "Advanced security and compliance features"
+          icon: "🏢"
+          
+        - date: "Q4 2024"
+          title: "Global Expansion"
+          description: "Launched in 15 new markets"
+          icon: "🌍"
+          milestone: true
+          
+        - date: "Q1 2025"
+          title: "API v2.0"
+          description: "Enhanced developer platform"
+          icon: "🔧"
+          
+        - date: "Q2 2025"
+          title: "Analytics Dashboard"
+          description: "Real-time insights for customers"
+          icon: "📊"
+          
+    # Implementation Process
+    - type: process
+      title: "Customer Onboarding Process"
+      subtitle: "Enterprise Implementation"
+      steps:
+        - title: "Discovery"
+          description: "Requirements gathering and solution design"
+          icon: "🔍"
+          status: completed
+          
+        - title: "Configuration"
+          description: "System setup and customization"
+          icon: "⚙️"
+          status: completed
+          
+        - title: "Integration"
+          description: "Connect with existing systems"
+          icon: "🔌"
+          status: current
+          
+        - title: "Training"
+          description: "User training and documentation"
+          icon: "📚"
+          status: upcoming
+          
+        - title: "Go Live"
+          description: "Production deployment"
+          icon: "🚀"
+          status: upcoming
+          
+    # Leadership Team
+    - type: team
+      title: "Leadership Team"
+      subtitle: "Driving Innovation Forward"
+      members:
+        - name: "Sarah Chen"
+          role: "Chief Executive Officer"
+          bio: "20+ years in enterprise software, former VP at Microsoft"
+          image: "/images/sarah-chen.jpg"
+          
+        - name: "Michael Torres"
+          role: "Chief Financial Officer"
+          bio: "Former CFO at Salesforce, expert in SaaS metrics"
+          image: "/images/michael-torres.jpg"
+          
+        - name: "Lisa Park"
+          role: "Chief Product Officer"
+          bio: "Led product at Stripe, passionate about developer experience"
+          image: "/images/lisa-park.jpg"
+          
+        - name: "David Kumar"
+          role: "Chief Marketing Officer"
+          bio: "Built marketing at Zoom, growth marketing expert"
+          image: "/images/david-kumar.jpg"
+          
+        - name: "Jennifer Wu"
+          role: "Chief Technology Officer"
+          bio: "Former Google engineer, distributed systems expert"
+          image: "/images/jennifer-wu.jpg"
+          
+        - name: "Robert Johnson"
+          role: "VP of Sales"
+          bio: "Scaled sales teams at HubSpot and Atlassian"
+          image: "/images/robert-johnson.jpg"
+          
+    # Customer Testimonials
+    - type: testimonial
+      title: "What Our Customers Say"
+      testimonials:
+        - quote: "This platform has transformed our workflow. We've seen a 40% increase in productivity and our team loves using it."
+          author: "Emma Thompson"
+          role: "VP of Engineering"
+          company: "TechCorp"
+          rating: 5
+          
+        - quote: "The best investment we've made this year. ROI was clear within the first quarter."
+          author: "James Mitchell"
+          role: "CEO"
+          company: "Innovation Labs"
+          rating: 5
+          
+        - quote: "Outstanding support team and the product just keeps getting better with each update."
+          author: "Maria Garcia"
+          role: "Head of Operations"
+          company: "Global Systems Inc"
+          rating: 5
+          
+    # Product Gallery
+    - type: gallery
+      title: "Product Showcase"
+      subtitle: "Key Features and Interfaces"
+      images:
+        - src: "/images/dashboard.png"
+          alt: "Analytics Dashboard"
+          caption: "Real-time analytics and insights"
+          
+        - src: "/images/mobile-app.png"
+          alt: "Mobile Application"
+          caption: "Native iOS and Android apps"
+          
+        - src: "/images/integrations.png"
+          alt: "Integration Hub"
+          caption: "Connect with 100+ tools"
+          
+        - src: "/images/collaboration.png"
+          alt: "Team Collaboration"
+          caption: "Real-time collaboration features"
+          
+        - src: "/images/api-docs.png"
+          alt: "Developer API"
+          caption: "Comprehensive API documentation"
+          
+        - src: "/images/security.png"
+          alt: "Security Center"
+          caption: "Enterprise-grade security"
+          
+    # Comparison
+    - type: comparison
+      title: "Competitive Advantage"
+      items:
+        - competitors:
+            title: "Traditional Solutions"
+            icon: "🏛️"
+            points:
+              - "Complex implementation (6-12 months)"
+              - "High total cost of ownership"
+              - "Limited integrations"
+              - "Steep learning curve"
+              - "Rigid customization"
+              
+          our_solution:
+            title: "Our Platform"
+            icon: "🚀"
+            points:
+              - "Quick setup (< 1 week)"
+              - "Transparent, usage-based pricing"
+              - "100+ native integrations"
+              - "Intuitive, modern interface"
+              - "Flexible API-first platform"
+              
+    # Strategic Priorities
+    - type: content
+      title: "2025 Strategic Priorities"
+      layout: single
+      content:
+        - type: list
+          style: numbers
+          items:
+            - text: "Expand Enterprise Segment"
+              subItems:
+                - "Target Fortune 500 companies"
+                - "Enhanced security certifications"
+                - "Dedicated account management"
+                
+            - text: "International Growth"
+              subItems:
+                - "Launch in APAC markets"
+                - "Multi-language support"
+                - "Local data centers"
+                
+            - text: "Platform Innovation"
+              subItems:
+                - "AI/ML capabilities"
+                - "Advanced analytics"
+                - "Developer ecosystem"
+                
+    # Financial Summary
+    - type: summary
+      title: "Key Takeaways"
+      subtitle: "Q4 2024 Highlights"
+      highlights:
+        - "Record revenue of $24.5M, exceeding targets by 12%"
+        - "Successfully expanded to 15 new international markets"
+        - "Achieved 125K monthly active users, 15% QoQ growth"
+        - "Launched enterprise features driving 45% of new revenue"
+        - "Maintained industry-leading NPS score of 72"
+        - "Reduced churn to all-time low of 2.3%"
+        - "Secured $50M Series B funding at $500M valuation"
+        
+    # Call to Action
+    - type: title
+      title: "Looking Ahead"
+      subtitle: "Building the Future Together"
+      background:
+        type: gradient
+        value: gradient-blue
+      content:
+        - type: text
+          value: |
+            ### Q1 2025 Focus Areas
+            
+            • Close 3 major enterprise deals
+            • Launch v2.0 of our API
+            • Expand team by 50 engineers
+            • Begin Series C fundraising
+            
+          style:
+            align: center
+            
+    # Questions
+    - type: title
+      title: "Questions & Discussion"
+      subtitle: "Thank you for your attention"
+      background:
+        type: gradient
+        value: gradient-dark
+      notes: "Open the floor for questions. Key topics: financial performance, product roadmap, strategic initiatives." 

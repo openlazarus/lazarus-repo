@@ -1,0 +1,224 @@
+# Slides - Default Presentation Example
+# This file demonstrates the YAML format for creating presentations
+
+presentation:
+  meta:
+    title: "Introduction to Slides"
+    author: "Lazarus Engineering"
+    date: 2025-01-15
+    theme: minimal
+    aspectRatio: "16:9"
+    
+  defaults:
+    transition: fade
+    duration: 0.5
+    
+  slides:
+    # Opening slide
+    - type: title
+      title: "Welcome to Slides"
+      subtitle: "Beautiful presentations for developers"
+      background: gradient-purple
+      notes: |
+        Welcome everyone! Today we'll explore how Slides makes
+        creating technical presentations effortless and elegant.
+        
+    # Introduction
+    - type: content
+      title: "What is Slides?"
+      layout: single
+      content:
+        - type: text
+          value: |
+            Slides is a YAML-driven presentation system that brings 
+            Apple's design philosophy to technical presentations.
+            
+        - type: list
+          style: bullets
+          items:
+            - "Write presentations in YAML"
+            - "Beautiful by default"
+            - "Code highlighting and live execution"
+            - "Version control friendly"
+            
+      notes: |
+        Emphasize the simplicity of YAML and how it fits
+        naturally into a developer's workflow.
+        
+    # Code example
+    - type: code
+      title: "Simple Example"
+      language: yaml
+      highlight: [6, 7, 8]
+      content: |
+        presentation:
+          meta:
+            title: "My Talk"
+            theme: minimal
+            
+          slides:
+            - type: title
+              title: "Hello World"
+              subtitle: "Getting started"
+              
+      notes: "Show how simple it is to get started"
+      
+    # Two column layout
+    - type: content
+      title: "Flexible Layouts"
+      layout: two-column
+      content:
+        left:
+          - type: text
+            value: |
+              ### Why YAML?
+              
+              YAML provides a clean, readable format that's perfect
+              for presentations:
+              
+          - type: list
+            items:
+              - "Human-readable"
+              - "Git-friendly"
+              - "Easy to edit"
+              
+        right:
+          - type: code
+            language: yaml
+            content: |
+              layout: two-column
+              content:
+                left:
+                  - type: text
+                  - type: list
+                right:
+                  - type: code
+                  
+    # Code with execution
+    - type: code
+      title: "Live Code Execution"
+      language: javascript
+      executable: true
+      content: |
+        // This code can run live during the presentation!
+        function fibonacci(n) {
+          if (n <= 1) return n;
+          return fibonacci(n - 1) + fibonacci(n - 2);
+        }
+        
+        // Calculate the first 10 Fibonacci numbers
+        const sequence = Array.from({ length: 10 }, (_, i) => fibonacci(i));
+        console.log(sequence);
+      output:
+        show: true
+        height: 100
+        
+    # Diagram slide
+    - type: diagram
+      title: "Architecture Overview"
+      content: |
+        graph LR
+          A[YAML Document] --> B[Parser]
+          B --> C[Slide Data]
+          C --> D[Renderer]
+          D --> E[Beautiful Slides]
+          
+          style A fill:#f5f5f7,stroke:#86868b
+          style E fill:#06c,stroke:#004c9e,color:#fff
+          
+    # Comparison slide
+    - type: comparison
+      title: "Traditional vs. Slides"
+      items:
+        - traditional:
+            title: "Traditional Tools"
+            points:
+              - "Binary formats"
+              - "GUI-only editing"
+              - "Limited version control"
+              - "Proprietary formats"
+          slides:
+            title: "Slides"
+            points:
+              - "Plain text YAML"
+              - "Edit anywhere"
+              - "Git-friendly"
+              - "Open format"
+              
+    # Features grid
+    - type: content
+      title: "Key Features"
+      layout:
+        type: grid
+        columns: 3
+        gap: medium
+      content:
+        - type: feature
+          icon: "🎨"
+          title: "Beautiful Design"
+          description: "Apple-inspired aesthetics"
+          
+        - type: feature
+          icon: "💻"
+          title: "Code First"
+          description: "Syntax highlighting for 100+ languages"
+          
+        - type: feature
+          icon: "🚀"
+          title: "Fast"
+          description: "60fps animations"
+          
+        - type: feature
+          icon: "📱"
+          title: "Responsive"
+          description: "Works on any device"
+          
+        - type: feature
+          icon: "🔒"
+          title: "Secure"
+          description: "No external dependencies"
+          
+        - type: feature
+          icon: "♿"
+          title: "Accessible"
+          description: "Full keyboard navigation"
+          
+    # Quote slide
+    - type: content
+      title: "Philosophy"
+      layout: single
+      background: subtle
+      content:
+        - type: quote
+          text: |
+            "Design is not just what it looks like and feels like.
+            Design is how it works."
+          author: "Steve Jobs"
+          
+    # Call to action
+    - type: title
+      title: "Start Building"
+      subtitle: "Create your first presentation today"
+      background: gradient-blue
+      content:
+        - type: buttons
+          items:
+            - text: "Documentation"
+              url: "/dev/tools/slides/docs"
+              style: primary
+              
+            - text: "Examples"
+              url: "/dev/tools/slides/examples"
+              style: secondary
+              
+    # Thank you slide
+    - type: title
+      title: "Thank You"
+      subtitle: "Questions?"
+      background: gradient-dark
+      notes: |
+        Thank the audience and open the floor for questions.
+        Remember to mention:
+        - Documentation available online
+        - GitHub repository for contributions
+        - Community Discord for support 
