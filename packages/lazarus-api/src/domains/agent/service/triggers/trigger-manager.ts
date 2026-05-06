@@ -34,6 +34,11 @@ export class AgentTriggerManager implements IAgentTriggerManager {
   private workspaceManager: WorkspaceManager
   private agentExecutor: WorkspaceAgentExecutor
   private scheduledJobs: Map<string, NodeJS.Timeout> = new Map()
+  // Tracks inbox message IDs currently being processed by an email trigger.
+  // Polling fires every 30s but agent execution can take minutes — without
+  // this guard, both setInterval polls and the SES webhook can race and
+  // spawn N concurrent runs for the same message before markMessageAsRead lands.
+  private inFlightEmailMessageIds: Set<string> = new Set()
 
   constructor(executor?: WorkspaceAgentExecutor) {
     this.workspaceManager = new WorkspaceManager()
@@ -939,6 +944,7 @@ export class AgentTriggerManager implements IAgentTriggerManager {
     // Check for unread messages that match trigger conditions
     const matchingMessages = messages.filter((message) => {
       if (message.metadata?.read) return false
+      if (this.inFlightEmailMessageIds.has(message.id)) return false
 
       const conditions = config.conditions || {}
 
@@ -974,19 +980,24 @@ export class AgentTriggerManager implements IAgentTriggerManager {
       return true
     })
 
-    // Trigger execution for each matching message
+    // Trigger execution for each matching message.
+    // Mark read + reserve in-flight BEFORE running the agent so concurrent
+    // 30s polls and the SES webhook can't double-fire on the same message.
     for (const message of matchingMessages) {
-      await this.runTriggerExecution(trigger, {
-        email: message,
-        messageId: message.id,
-        from: message.sender,
-        subject: message.subject,
-        body: message.textContent,
-        isInternal: message.metadata?.type === 'internal',
-      })
-
-      // Mark message as read
+      this.inFlightEmailMessageIds.add(message.id)
       await this.markMessageAsRead(trigger, message.id)
+      try {
+        await this.runTriggerExecution(trigger, {
+          email: message,
+          messageId: message.id,
+          from: message.sender,
+          subject: message.subject,
+          body: message.textContent,
+          isInternal: message.metadata?.type === 'internal',
+        })
+      } finally {
+        this.inFlightEmailMessageIds.delete(message.id)
+      }
     }
   }
 

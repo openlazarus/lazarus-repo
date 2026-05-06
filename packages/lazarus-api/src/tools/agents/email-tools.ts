@@ -1,5 +1,6 @@
 import { tool, createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
 import { z } from 'zod'
+import { parseOffice } from 'officeparser'
 import { agentEmailStorage, EmailFilter } from '@domains/email/repository/agent-email-storage'
 import type { EmailAttachment } from '../../domains/email/types/email.types'
 import { sesEmailSender } from '@domains/email/service/ses-email-sender'
@@ -280,7 +281,7 @@ export const emailTools = [
   // Get email attachment
   tool(
     'email_attachment',
-    'Get the content of an email attachment. Returns the attachment as base64-encoded data.',
+    'Get the content of an email attachment. Office documents (.docx, .pptx, .xlsx, .pdf, .odt, .odp, .ods) are auto-extracted to plain text so the agent can read them directly. All other formats are returned as base64-encoded bytes.',
     {
       storagePath: z.string().describe('The storage path of the attachment (from email_read)'),
     },
@@ -308,6 +309,45 @@ export const emailTools = [
           }
         }
 
+        // Office documents are binary (ZIP-of-XML for OOXML/ODF, or PDF) and the
+        // LLM cannot read them as base64. Extract to plain text server-side.
+        const lowerPath = args.storagePath.toLowerCase()
+        const officeExtensions = ['.docx', '.pptx', '.xlsx', '.pdf', '.odt', '.odp', '.ods']
+        const isOfficeDoc = officeExtensions.some((ext) => lowerPath.endsWith(ext))
+        if (isOfficeDoc) {
+          try {
+            const parsed = await parseOffice(buffer)
+            const text = parsed.toText()
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      success: true,
+                      attachment: {
+                        storagePath: args.storagePath,
+                        size: buffer.length,
+                        format: 'text',
+                        sourceFormat: parsed.type,
+                        text,
+                      },
+                    },
+                    null,
+                    2,
+                  ),
+                },
+              ],
+            }
+          } catch (extractError: any) {
+            log.warn(
+              { err: extractError, storagePath: args.storagePath },
+              'Office document extraction failed, falling back to base64',
+            )
+            // fall through to base64
+          }
+        }
+
         return {
           content: [
             {
@@ -318,6 +358,7 @@ export const emailTools = [
                   attachment: {
                     storagePath: args.storagePath,
                     size: buffer.length,
+                    format: 'base64',
                     contentBase64: buffer.toString('base64'),
                   },
                 },
@@ -646,7 +687,7 @@ export const emailTools = [
   // Reply to email
   tool(
     'email_reply',
-    'Reply to an email you received. This automatically sets the correct recipient and subject.',
+    'Reply to an email you received. This automatically sets the correct recipient and subject. Supports attaching workspace files to the reply.',
     {
       messageId: z
         .string()
@@ -663,6 +704,22 @@ export const emailTools = [
         .optional()
         .describe(
           "Rich HTML reply body (optional). When provided, this is the primary content displayed by email clients. The plain text 'body' field serves as the fallback.",
+        ),
+      attachments: z
+        .array(
+          z.object({
+            path: z
+              .string()
+              .describe("File path relative to workspace root (e.g., './reports/summary.pdf')"),
+            filename: z
+              .string()
+              .optional()
+              .describe('Custom filename for the attachment (optional, defaults to file basename)'),
+          }),
+        )
+        .optional()
+        .describe(
+          'Array of file attachments to include in the reply. Files must exist in the workspace. Max 10MB per file, 10MB total.',
         ),
     },
     async (args) => {
@@ -760,6 +817,11 @@ export const emailTools = [
           // Continue without threading — reply still goes out
         }
 
+        const replyWorkspacePath = getExecutionContext().workspacePath
+        if (!replyWorkspacePath && args.attachments && args.attachments.length > 0) {
+          throw new Error('WORKSPACE_PATH not set in environment, cannot attach files')
+        }
+
         // Send reply using SES with threading headers
         const sentEmail = await sesEmailSender.sendReply(
           agentId,
@@ -776,6 +838,8 @@ export const emailTools = [
           },
           agentEmail,
           threadingHeaders,
+          args.attachments as EmailAttachment[] | undefined,
+          replyWorkspacePath,
         )
 
         // Store outbound message in conversation
