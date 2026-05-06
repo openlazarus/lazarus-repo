@@ -203,6 +203,7 @@ export class RuntimeTracer implements IAgentRuntime {
                     outputTokens,
                     cacheReadTokens: m.usage.cache_read_input_tokens ?? 0,
                     cacheWriteTokens: m.usage.cache_creation_input_tokens ?? 0,
+                    platformSource: ctx.platformSource ?? undefined,
                   })
                 }
               }
