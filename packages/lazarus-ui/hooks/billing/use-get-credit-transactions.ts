@@ -17,8 +17,18 @@ export interface CreditTransaction {
   activity_reference_type?: string
   workspace_id?: string
   description?: string
-  metadata?: Record<string, unknown>
+  metadata?: TCreditTransactionMetadata
   created_at: string
+}
+
+export interface TCreditTransactionMetadata {
+  input_tokens?: number
+  output_tokens?: number
+  cache_read_tokens?: number
+  cache_write_tokens?: number
+  total_tokens?: number
+  platform_source?: string
+  [key: string]: unknown
 }
 
 export const useGetCreditTransactions = (limit = 50) =>

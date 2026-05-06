@@ -142,30 +142,62 @@ export const CreditsSection = () => {
       },
     }))
 
+  const PLATFORM_LABELS: Record<string, string> = {
+    chat: 'Chat',
+    discord: 'Discord',
+    slack: 'Slack',
+    email: 'Email',
+    whatsapp: 'WhatsApp',
+  }
+
+  const ACTIVITY_LABELS: Record<string, string> = {
+    agent_run: 'Agent run',
+    tool_use: 'Tool use',
+    conversation: 'Conversation',
+  }
+
+  const formatActivityLabel = (activityType?: string): string => {
+    if (!activityType) return 'Usage'
+    if (ACTIVITY_LABELS[activityType]) return ACTIVITY_LABELS[activityType]
+    return activityType
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  }
+
+  const formatPurchaseDescription = (
+    tx: (typeof transactions)[number],
+  ): string => {
+    const method =
+      tx.purchase_method === 'auto_reload' ? 'auto-reload' : 'one-time'
+    return `Credit purchase (${method})`
+  }
+
+  const formatConsumptionDescription = (
+    tx: (typeof transactions)[number],
+  ): string => {
+    const meta = tx.metadata
+    const source = meta?.platform_source
+    const inputTokens = meta?.input_tokens
+    const outputTokens = meta?.output_tokens
+    const hasTokens =
+      typeof inputTokens === 'number' && typeof outputTokens === 'number'
+    if (source && hasTokens) {
+      const label = PLATFORM_LABELS[source] ?? source
+      return `${label}: ${inputTokens} input, ${outputTokens} output tokens`
+    }
+    if (hasTokens) {
+      return `${formatActivityLabel(tx.activity_type)}: ${inputTokens} input, ${outputTokens} output tokens`
+    }
+    return formatActivityLabel(tx.activity_type)
+  }
+
   const formatTransactionDescription = (
     tx: (typeof transactions)[number],
   ): string => {
-    if (tx.description) return tx.description
     if (tx.transaction_type === 'credit_purchase') {
-      const method =
-        tx.purchase_method === 'auto_reload' ? 'auto-reload' : 'one-time'
-      return `Credit purchase (${method})`
+      return tx.description ?? formatPurchaseDescription(tx)
     }
-    const activityLabels: Record<string, string> = {
-      agent_run: 'Agent run',
-      tool_use: 'Tool use',
-      conversation: 'Conversation',
-    }
-    const activity =
-      activityLabels[tx.activity_type ?? ''] ||
-      (tx.activity_type
-        ? tx.activity_type
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, (c) => c.toUpperCase())
-        : 'Usage')
-    return tx.consumed_by_agent_id
-      ? `${activity} • ${tx.consumed_by_agent_id}`
-      : activity
+    return formatConsumptionDescription(tx)
   }
 
   // Convert transactions to invoice format for display
