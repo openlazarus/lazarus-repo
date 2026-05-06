@@ -36,6 +36,8 @@ export const PRESET_LOGOS: Record<string, string> = {
   dropbox: '/logos/dropbox-logo.svg',
   // Design
   canva: '/logos/canva-logo.svg',
+  // CMS
+  sanity: '/logos/sanity-logo.svg',
 }
 
 /**

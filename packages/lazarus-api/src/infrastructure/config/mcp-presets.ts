@@ -1207,6 +1207,58 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
       env: {},
     },
   },
+
+  sanity: {
+    name: 'Sanity',
+    icon: 'edit-3',
+    category: 'developer',
+    // Sanity MCP Server - headless CMS content management
+    // Uses remote MCP via HTTPS - connects to https://mcp.sanity.io
+    // Authenticated via long-lived API token (vs. OAuth which expires every 7 days).
+    // Token is injected into the Authorization header by mcp-remote's ${VAR} expansion.
+    // https://www.sanity.io/docs/ai/mcp-server
+    command: 'npx',
+    args: [
+      '-y',
+      'mcp-remote@latest',
+      'https://mcp.sanity.io',
+      '--header',
+      'Authorization:Bearer ${SANITY_API_TOKEN}',
+    ],
+    transport: 'stdio',
+    description:
+      'Connect to Sanity headless CMS to query content, manage documents, schemas, and datasets using natural language',
+    env_schema: {
+      SANITY_API_TOKEN: {
+        required: true,
+        secure: true,
+        type: 'text',
+        description:
+          'Sanity API token (long-lived). Create one at https://www.sanity.io/manage → Project → API → Tokens. Use Editor or Viewer role depending on access needed.',
+        placeholder: 'sk...',
+      },
+    },
+    envSchema: {
+      SANITY_API_TOKEN: {
+        required: true,
+        sensitive: true,
+        description:
+          'Sanity API token from sanity.io/manage → Project → API → Tokens (long-lived, no 7-day OAuth expiry)',
+        placeholder: 'sk...',
+      },
+    },
+    config: {
+      command: 'npx',
+      args: [
+        '-y',
+        'mcp-remote@latest',
+        'https://mcp.sanity.io',
+        '--header',
+        'Authorization:Bearer ${SANITY_API_TOKEN}',
+      ],
+      env: {},
+    },
+  },
 }
 
 /**
