@@ -437,6 +437,8 @@ export class SESEmailSender implements ISESEmailSender {
       inReplyTo?: string
       references?: string[]
     },
+    attachments?: EmailAttachment[],
+    workspacePath?: string,
   ): Promise<SentEmail> {
     // Use provided agent email or construct from default domain
     const fromEmail = agentEmail || `${agentId}@${this.defaultFromDomain}`
@@ -454,6 +456,8 @@ export class SESEmailSender implements ISESEmailSender {
       replyTo: fromEmail,
       inReplyTo: threadingHeaders?.inReplyTo,
       references: threadingHeaders?.references,
+      attachments,
+      workspacePath,
     })
   }
 

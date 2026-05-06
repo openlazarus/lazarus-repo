@@ -1,4 +1,4 @@
-import type { SendEmailOptions, SentEmail } from '@domains/email/types/email.types'
+import type { EmailAttachment, SendEmailOptions, SentEmail } from '@domains/email/types/email.types'
 
 export interface ISESEmailSender {
   /** Send an email via AWS SES. */
@@ -28,6 +28,8 @@ export interface ISESEmailSender {
       inReplyTo?: string
       references?: string[]
     },
+    attachments?: EmailAttachment[],
+    workspacePath?: string,
   ): Promise<SentEmail>
 
   /** List sent emails for an agent. */

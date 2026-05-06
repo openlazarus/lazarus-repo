@@ -441,6 +441,20 @@ class EmailRouterController {
                 })
               }
 
+              // Mark the inbox message as read BEFORE invoking the agent.
+              // The polling backup (setInterval every 30s in trigger-manager.ts)
+              // only filters by metadata.read, so if we wait until after
+              // executeAgentTrigger returns the poll fires mid-execution and
+              // spawns a duplicate run for the same email.
+              try {
+                await agentEmailStorage.markAsRead(agentId, workspace.id, savedEmail.id)
+              } catch (markReadError) {
+                logger.error(
+                  { err: markReadError },
+                  'Failed to mark email as read before trigger execution',
+                )
+              }
+
               const execution = await triggerManager.executeAgentTrigger(
                 fullTrigger,
                 triggerPayload,
@@ -453,16 +467,6 @@ class EmailRouterController {
                 )
               } else {
                 logger.info({ triggerId: primaryTrigger.id }, 'Email trigger executed successfully')
-              }
-
-              try {
-                await agentEmailStorage.markAsRead(agentId, workspace.id, savedEmail.id)
-                logger.info(
-                  { emailId: savedEmail.id },
-                  'Marked email as read to prevent re-triggering',
-                )
-              } catch (markReadError) {
-                logger.error({ err: markReadError }, 'Failed to mark email as read')
               }
             } catch (triggerError) {
               logger.error(
