@@ -22,6 +22,11 @@ const resolveInRepoMcpServer = (filename: string) => path.join(MCP_SERVERS_DIR, 
 
 const GIVEBUTTER_MCP_SERVER = resolveInRepoMcpServer('givebutter-mcp-server.js')
 const MYSQL_MCP_SERVER = require.resolve('@benborla29/mcp-server-mysql/dist/index.js')
+const PLAYWRIGHT_MCP_LAUNCHER = path.join(
+  findPackageRoot(__dirname),
+  'scripts',
+  'playwright-mcp-launcher.sh',
+)
 
 // Path to the analytics-mcp Python binary (installed via pipx). Override with
 // ANALYTICS_MCP_BIN if you've installed it somewhere other than the default.
@@ -1221,8 +1226,12 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     // executor sets to the workspace root — so '.playwright-profile' resolves
     // to <workspacePath>/.playwright-profile. This lets agents reuse an
     // interactive login (e.g. Instagram) across runs without re-authenticating.
-    command: 'npx',
-    args: ['-y', '@playwright/mcp@latest', '--user-data-dir=.playwright-profile'],
+    //
+    // We invoke @playwright/mcp via a launcher script that pins Playwright to
+    // the chrome-headless-shell binary instead of the default chrome-for-testing
+    // build, which crashes on Amazon Linux 2023 with a crashpad init bug.
+    command: PLAYWRIGHT_MCP_LAUNCHER,
+    args: ['--user-data-dir=.playwright-profile'],
     transport: 'stdio',
     description:
       'Drive a real browser to navigate sites, fill forms, click, capture screenshots, and scrape pages — useful for sites without a public API',
@@ -1231,8 +1240,8 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     },
     envSchema: {},
     config: {
-      command: 'npx',
-      args: ['-y', '@playwright/mcp@latest', '--user-data-dir=.playwright-profile'],
+      command: PLAYWRIGHT_MCP_LAUNCHER,
+      args: ['--user-data-dir=.playwright-profile'],
       env: {},
     },
   },

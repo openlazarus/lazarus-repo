@@ -6,6 +6,7 @@ import * as fsSync from 'fs'
 import { execSync } from 'child_process'
 import { mcpConfigManager } from '@domains/mcp/service/mcp-config-manager'
 import { mcpOAuthService } from '@domains/mcp/service/mcp-oauth.service'
+import { runPresetInstaller } from '@domains/mcp/service/preset-installers'
 import { WorkspaceManager } from '@domains/workspace/service/workspace-manager'
 import { MCPDirectTester } from '@infrastructure/config/mcp-direct-tester'
 import { getAllPresets, getPresetCategories, getPreset } from '@infrastructure/config/mcp-presets'
@@ -497,10 +498,16 @@ class WorkspaceMcpController {
 
     await mcpConfigManager.addMCPServer(workspace.path, serverName, serverConfig)
 
+    // Some presets need host-side dependencies (e.g. Playwright's Chromium
+    // binary). Run the matching installer if one is registered. Idempotent —
+    // re-runs are no-ops when the dependency is already cached.
+    const installResult = preset_id ? await runPresetInstaller(preset_id) : null
+
     return res.json({
       success: true,
       message: `Server '${serverName}' added to workspace`,
       server: { name: serverName, ...serverConfig },
+      ...(installResult && { install: installResult }),
     })
   }
 
