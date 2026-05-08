@@ -83,6 +83,21 @@ class BrowserSessionManager {
 
 export const browserSessionManager = new BrowserSessionManager()
 
+const findPlaywrightHeadlessShell = async (home: string): Promise<string | null> => {
+  const root = path.join(home, '.cache', 'ms-playwright')
+  try {
+    const dirs = await fs.readdir(root)
+    const shellDir = dirs
+      .filter((d) => d.startsWith('chromium_headless_shell-'))
+      .sort()
+      .pop()
+    if (!shellDir) return null
+    return path.join(root, shellDir, 'chrome-headless-shell-linux64', 'chrome-headless-shell')
+  } catch {
+    return null
+  }
+}
+
 /**
  * Run an agent-browser CLI command with session isolation
  */
@@ -93,9 +108,29 @@ async function runBrowserCommand(
 ): Promise<string> {
   const sessionId = sessionOverride || getBrowserSessionId()
 
+  // System users (e.g. `lazarus`) have no XDG_RUNTIME_DIR and no
+  // /run/user/<uid>, so the daemon's default socket location fails with
+  // "Permission denied". Pin the socket dir under HOME/.cache, which is
+  // lazarus-writable, so the daemon can spawn its IPC socket.
+  const home = process.env.HOME || '/mnt/sdc'
+  const socketDir = process.env.AGENT_BROWSER_SOCKET_DIR || `${home}/.cache/agent-browser`
+  await fs.mkdir(socketDir, { recursive: true }).catch((err) => {
+    log.debug({ err, socketDir }, 'agent-browser socket dir mkdir best-effort')
+  })
+
+  // agent-browser bundles its own Playwright pinned to a specific browser
+  // version (e.g. chromium_headless_shell-1208), but we install browsers via
+  // @playwright/mcp's install-browser command which may resolve to a different
+  // version. Reuse whichever chrome-headless-shell is already on disk under
+  // ~/.cache/ms-playwright/ so the two tools share a single browser cache.
+  const executablePath =
+    process.env.AGENT_BROWSER_EXECUTABLE_PATH || (await findPlaywrightHeadlessShell(home))
+
   const env: Record<string, string> = {
     ...(process.env as Record<string, string>),
     AGENT_BROWSER_SESSION: sessionId,
+    AGENT_BROWSER_SOCKET_DIR: socketDir,
+    ...(executablePath && { AGENT_BROWSER_EXECUTABLE_PATH: executablePath }),
   }
 
   try {
