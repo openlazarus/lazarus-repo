@@ -35,6 +35,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { ToolListChangedNotificationSchema } from '@modelcontextprotocol/sdk/types.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { createLogger } from '@utils/logger'
+import { jsonSchemaToZodShape } from './json-schema-to-zod'
 
 const log = createLogger('workspace-mcp-proxy')
 
@@ -114,10 +115,16 @@ const transportKind = (cfg: ExternalServerConfig): 'stdio' | 'sse' | 'http' | 'u
 const buildTransport = (cfg: ExternalServerConfig, baseEnv: Record<string, string>): Transport => {
   const kind = transportKind(cfg)
   if (kind === 'stdio') {
+    // Spawn the upstream MCP with cwd = workspace path so that any relative
+    // paths the MCP creates at runtime (e.g. Playwright's --user-data-dir,
+    // .playwright-mcp output dir, etc.) land inside the workspace and not
+    // /opt/lazarus (which the lazarus user can't write to).
+    const cwd = baseEnv.WORKSPACE_PATH || undefined
     return new StdioClientTransport({
       command: cfg.command!,
       args: cfg.args ?? [],
       env: { ...baseEnv, ...(cfg.env ?? {}) },
+      cwd,
     })
   }
   if (kind === 'sse') {
@@ -151,10 +158,11 @@ const reconcileTools = async (state: ProxyState): Promise<void> => {
   const inst: any = state.sdkServer.instance
   for (const t of list.tools) {
     seen.add(t.name)
-    const inputSchema = (t.inputSchema as Record<string, unknown> | undefined) ?? {
-      type: 'object',
-      properties: {},
-    }
+    // Upstream MCPs send `inputSchema` as JSON Schema. The Anthropic Agent SDK
+    // and MCP SDK both validate tool args via `inputSchema.safeParseAsync(...)`,
+    // so we convert to a Zod raw shape here. A raw shape ({ key: ZodType }) is
+    // what `objectFromShape` in @modelcontextprotocol/sdk's zod-compat expects.
+    const inputSchema = jsonSchemaToZodShape(t.inputSchema as Record<string, unknown> | undefined)
     if (state.registeredTools.has(t.name)) {
       const existing = inst._registeredTools?.[t.name]
       if (existing && typeof existing.update === 'function') {
