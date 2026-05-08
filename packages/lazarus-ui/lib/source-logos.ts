@@ -38,6 +38,8 @@ export const PRESET_LOGOS: Record<string, string> = {
   canva: '/logos/canva-logo.svg',
   // CMS
   sanity: '/logos/sanity-logo.svg',
+  // Browser automation
+  playwright: '/logos/playwright-logo.svg',
 }
 
 /**

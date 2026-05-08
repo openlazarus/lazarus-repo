@@ -1208,6 +1208,35 @@ export const MCP_PRESETS: Record<string, MCPPreset> = {
     },
   },
 
+  playwright: {
+    name: 'Playwright',
+    icon: 'playwright',
+    category: 'developer',
+    // Playwright MCP Server - browser automation (navigate, click, fill, screenshot, scrape)
+    // Official Microsoft package: @playwright/mcp
+    // https://playwright.dev/docs/getting-started-mcp
+    //
+    // The browser profile (cookies, login state) persists in a per-workspace
+    // user-data-dir. The path is relative to the MCP cwd, which the agent
+    // executor sets to the workspace root — so '.playwright-profile' resolves
+    // to <workspacePath>/.playwright-profile. This lets agents reuse an
+    // interactive login (e.g. Instagram) across runs without re-authenticating.
+    command: 'npx',
+    args: ['-y', '@playwright/mcp@latest', '--user-data-dir=.playwright-profile'],
+    transport: 'stdio',
+    description:
+      'Drive a real browser to navigate sites, fill forms, click, capture screenshots, and scrape pages — useful for sites without a public API',
+    env_schema: {
+      // No required env vars - browser session state persists in workspace-scoped profile dir
+    },
+    envSchema: {},
+    config: {
+      command: 'npx',
+      args: ['-y', '@playwright/mcp@latest', '--user-data-dir=.playwright-profile'],
+      env: {},
+    },
+  },
+
   sanity: {
     name: 'Sanity',
     icon: 'edit-3',
