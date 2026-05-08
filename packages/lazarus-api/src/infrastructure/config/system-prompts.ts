@@ -48,7 +48,12 @@ For **external email** (outside the workspace), use \`email_send\` from email-to
 - Python (\`py_scripts/\`): For data processing, analysis, visualization
 - Bash: For file operations, running scripts
 
-You can also search for additional tools on demand via the SDK's tool-search mechanism. Categories include: Discord, Slack, WhatsApp, integration channels, browser automation, v0 generation, Google AI, agent management, memory. If a task needs a capability not listed above, search for it instead of assuming it isn't available.
+You can also search for additional tools on demand via \`ToolSearch\`. Two query forms:
+
+1. **Exact-name select** — when you already know the full tool name (anything starting \`mcp__<server>__<tool>\`), use \`query: "select:<full-tool-name>"\`. Loads that one tool's schema directly.
+2. **Keyword search** — for capabilities whose exact name you don't know, use a plain keyword query.
+
+If a task instruction names a specific MCP tool by its full \`mcp__<server>__<tool>\` form, try \`select:\` with that exact name first. Keyword search may miss workspace MCPs. Do not assume a tool is unavailable until you've tried \`select:\`.
 
 ## Fan-out pattern — MANDATORY for "1 thing × K targets"
 When a request asks for the SAME thing across K ≥ 3 targets (e.g. *"review activity for 5 people"*, *"summarize each of these 8 PRs"*, *"check status of these 4 services"*), do NOT run all K investigations in your own session. Issue K parallel \`delegate_task\` calls in a single assistant message — one per target. Each delegated session is short (1–3 tool calls) and reports back a one-paragraph summary. You receive K summaries and synthesize.

@@ -11,6 +11,7 @@ import { MCPWorkspaceManager } from '@domains/workspace/service/mcp-workspace-ma
 import { browserSessionManager } from '@tools/agents'
 import { consumeTaskResult } from '@tools/agents/task-result-tools'
 import { createToolServers } from '@tools/mcp-tool-server-factory'
+import { createWorkspaceMcpProxies } from '@tools/workspace-mcp-proxy'
 import { wrapWithLazarusIdentity } from '@infrastructure/config/system-prompts'
 import { MAX_TURNS } from '@infrastructure/config/max-turns'
 import { realtime, executionCache } from '@realtime'
@@ -284,10 +285,43 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
     // Get custom tools for system agents
     const customTools = this.getCustomToolsForAgent(agent)
 
+    // Abort controller hoisted up so the workspace MCP proxies (built next)
+    // can hook their callTool requests onto the same signal — agent abort
+    // cancels in-flight MCP calls and tears down the proxies.
+    const abortController = new AbortController()
+    executionAbortRegistry.register(executionId, abortController)
+
+    // Wrap external workspace MCPs in in-process proxies so their tools enter
+    // the SDK's deferred-tool index that ToolSearch searches against. Without
+    // this, ToolSearch select:mcp__sanity__* returns "No matching deferred
+    // tools found" even when Sanity is fully connected. Gated by env flag.
+    const mcpProxyEnabled = process.env.LAZARUS_MCP_PROXY_ENABLED === 'true'
+    let proxiedExternal: Record<string, any> = {}
+    let closeProxies: () => Promise<void> = async () => {}
+    if (mcpProxyEnabled && interpolatedMcpConfig.mcpServers) {
+      const baseProxyEnv = withExecutionTag(
+        {
+          ...filterServerSecrets(process.env),
+          MCP_REMOTE_CONFIG_DIR: `${workspace.path}/.mcp-auth`,
+        },
+        executionId,
+      )
+      const result = await createWorkspaceMcpProxies(
+        interpolatedMcpConfig.mcpServers,
+        baseProxyEnv,
+        { abortSignal: abortController.signal },
+      )
+      proxiedExternal = result.servers
+      closeProxies = result.close
+      log.info(
+        `MCP proxy mode: wrapped ${Object.keys(proxiedExternal).length} workspace MCPs in-process`,
+      )
+    }
+
     // Merge custom tools with workspace MCPs
     const allMcpServers = {
       ...customTools, // Custom in-process tools
-      ...interpolatedMcpConfig.mcpServers, // External MCP servers
+      ...(mcpProxyEnabled ? proxiedExternal : interpolatedMcpConfig.mcpServers),
     }
 
     // Compute guardrail restrictions
@@ -359,8 +393,8 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
     // Inactivity timeout: 15 minutes with no new SDK messages → abort
     const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000
 
-    const abortController = new AbortController()
-    executionAbortRegistry.register(executionId, abortController)
+    // abortController + registration hoisted earlier (above proxy creation)
+    // so the proxies can attach to the same signal.
 
     let abortReason: string | undefined
     let lastPendingTool: { name: string; startedAt: number } | undefined
@@ -967,6 +1001,13 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
           }
         } catch (approvalErr) {
           log.error({ err: approvalErr }, 'Approval cleanup error')
+        }
+
+        // Close in-process workspace MCP proxies (no-op when proxy mode disabled)
+        try {
+          await closeProxies()
+        } catch (proxyErr) {
+          log.error({ err: proxyErr }, 'Workspace MCP proxy cleanup error')
         }
 
         // Clean up orphaned MCP processes from this execution
