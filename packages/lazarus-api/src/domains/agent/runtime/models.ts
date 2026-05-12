@@ -9,10 +9,6 @@
  * and mirror it on the FE via `packages/lazarus-ui/lib/agent-models.ts`.
  */
 
-import { createLogger } from '@utils/logger'
-
-const log = createLogger('agent-models')
-
 export type TModelProvider = 'anthropic' | 'openai'
 
 export type TSupportedModel = 'claude-sonnet-4-6' | 'claude-opus-4-6'
@@ -64,19 +60,17 @@ const LEGACY_ALIASES: Record<string, TSupportedModel> = {
 const isSupported = (raw: string): raw is TSupportedModel => raw in MODEL_REGISTRY
 
 /**
- * Coerce a raw model string from disk/API into a known `TSupportedModel`.
- *
- * Existing agent config files may carry legacy values (`'opus'`, dated Sonnet
- * IDs, missing values). Read paths use this helper so old agents keep working;
- * write paths use the strict zod enum to prevent new bad values from landing.
+ * Canonicalize a raw model string. Known Anthropic ids and legacy aliases are
+ * mapped to their canonical `TSupportedModel`; any other id (e.g. an OpenRouter
+ * model like `openai/gpt-4`) is passed through untouched so non-Claude runtimes
+ * keep working. Missing values fall back to `DEFAULT_MODEL`.
  */
-export const normalizeModel = (raw: string | undefined | null): TSupportedModel => {
+export const normalizeModel = (raw: string | undefined | null): string => {
   if (!raw) return DEFAULT_MODEL
   if (isSupported(raw)) return raw
   const alias = LEGACY_ALIASES[raw]
   if (alias) return alias
-  log.warn({ raw }, 'unknown agent model, falling back to default')
-  return DEFAULT_MODEL
+  return raw
 }
 
 export const getProviderForModel = (model: TSupportedModel): TModelProvider =>
