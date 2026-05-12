@@ -34,7 +34,9 @@ import { cn } from '@/lib/utils'
 import { getToolDisplayName } from '@/lib/utils/tool-display-names'
 import { ClaudeCodeAgent } from '@/model/claude-code-agent'
 
+import { getModelLabel, type TSupportedModel } from '@/lib/agent-models'
 import { EmailConfigPanel } from '../email-config'
+import { ModelSelector } from '../model-selector'
 import { WhatsAppConfigPanel } from '../whatsapp-config'
 
 const getMCPIcon = (name: string) => {
@@ -133,6 +135,30 @@ export function AgentDetailOverview({
 
   return (
     <div className='space-y-6 pt-8'>
+      {/* Model */}
+      <div>
+        <h3 className='mb-3 text-[17px] font-semibold'>Model</h3>
+        {isEditMode ? (
+          <ModelSelector
+            value={editedAgent.modelConfig?.model}
+            onChange={(m: TSupportedModel) =>
+              onUpdateField('modelConfig.model', m)
+            }
+            isDark={isDark}
+            label=''
+            size='medium'
+          />
+        ) : (
+          <p
+            className={cn(
+              'text-sm',
+              isDark ? 'text-white/70' : 'text-black/70',
+            )}>
+            {getModelLabel(editedAgent.modelConfig?.model || '')}
+          </p>
+        )}
+      </div>
+
       {/* Instructions */}
       <div>
         <h3 className='mb-3 text-[17px] font-semibold'>Instructions</h3>

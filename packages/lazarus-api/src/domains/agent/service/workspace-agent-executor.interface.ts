@@ -23,5 +23,5 @@ export interface IWorkspaceAgentExecutor {
     }
     existingActivityLogId?: string
     cascadeDepth?: number
-  }): Promise<{ result: any; messages: any[] }>
+  }): Promise<{ result: any; messages: any[]; model?: string; toolErrors?: string[] }>
 }

@@ -4,14 +4,16 @@ import { AnimatePresence } from 'motion/react'
 import * as m from 'motion/react-m'
 import { useEffect, useReducer } from 'react'
 
+import { ModelSelector } from '@/components/features/agents/model-selector'
 import { LazarusLoader } from '@/components/ui/lazarus-loader'
 import { useAuth } from '@/hooks/auth/use-auth'
 import { AgentEvents, useAppEvents } from '@/hooks/core/use-app-events'
 import { useWorkspace } from '@/hooks/core/use-workspace'
-import { useCreateTrigger } from '@/hooks/features/agents/use-create-trigger'
 import { useWorkspaceMCPs } from '@/hooks/features/mcp/use-workspace-mcps'
 import { useTheme } from '@/hooks/ui/use-theme'
 import { useWorkspaceConfig } from '@/hooks/workspace/use-workspace-config'
+import { DEFAULT_MODEL, type TSupportedModel } from '@/lib/agent-models'
+import { api } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { buildAgentTriggerWebhookUrl } from '@/lib/webhook-url'
 import { ClaudeCodeAgent } from '@/model/claude-code-agent'
@@ -35,6 +37,7 @@ interface WizardState {
   direction: number // 1 = forward, -1 = back
   name: string
   systemPrompt: string
+  model: TSupportedModel
   allowedTools: string[]
   activeMCPs: string[]
   triggers: TriggerConfig[]
@@ -49,6 +52,7 @@ type WizardAction =
   | { type: 'SKIP' }
   | { type: 'SET_NAME'; payload: string }
   | { type: 'SET_SYSTEM_PROMPT'; payload: string }
+  | { type: 'SET_MODEL'; payload: TSupportedModel }
   | { type: 'TOGGLE_TOOL'; payload: string }
   | { type: 'TOGGLE_MCP'; payload: string }
   | { type: 'SET_MCPS'; payload: string[] }
@@ -63,6 +67,7 @@ const initialState: WizardState = {
   direction: 1,
   name: '',
   systemPrompt: '',
+  model: DEFAULT_MODEL,
   allowedTools: [...AVAILABLE_TOOLS],
   activeMCPs: [],
   triggers: [],
@@ -71,60 +76,65 @@ const initialState: WizardState = {
   error: null,
 }
 
+type WizardHandler<A extends WizardAction = WizardAction> = (
+  state: WizardState,
+  action: A,
+) => WizardState
+
+const wizardHandlers: {
+  [K in WizardAction['type']]: WizardHandler<Extract<WizardAction, { type: K }>>
+} = {
+  NEXT: (state) => ({
+    ...state,
+    step: Math.min(state.step + 1, 2),
+    direction: 1,
+    error: null,
+  }),
+  BACK: (state) => ({
+    ...state,
+    step: Math.max(state.step - 1, 0),
+    direction: -1,
+    error: null,
+  }),
+  SKIP: (state) => ({
+    ...state,
+    step: Math.min(state.step + 1, 2),
+    direction: 1,
+    error: null,
+  }),
+  SET_NAME: (state, action) => ({ ...state, name: action.payload }),
+  SET_SYSTEM_PROMPT: (state, action) => ({
+    ...state,
+    systemPrompt: action.payload,
+  }),
+  SET_MODEL: (state, action) => ({ ...state, model: action.payload }),
+  TOGGLE_TOOL: (state, action) => {
+    const tools = state.allowedTools.includes(action.payload)
+      ? state.allowedTools.filter((t) => t !== action.payload)
+      : [...state.allowedTools, action.payload]
+    return { ...state, allowedTools: tools }
+  },
+  TOGGLE_MCP: (state, action) => {
+    const mcps = state.activeMCPs.includes(action.payload)
+      ? state.activeMCPs.filter((m) => m !== action.payload)
+      : [...state.activeMCPs, action.payload]
+    return { ...state, activeMCPs: mcps }
+  },
+  SET_MCPS: (state, action) => ({ ...state, activeMCPs: action.payload }),
+  SET_TRIGGERS: (state, action) => ({ ...state, triggers: action.payload }),
+  SET_GUARDRAILS: (state, action) => ({ ...state, guardrails: action.payload }),
+  START_SUBMIT: (state) => ({ ...state, isSubmitting: true, error: null }),
+  SUBMIT_ERROR: (state, action) => ({
+    ...state,
+    isSubmitting: false,
+    error: action.payload,
+  }),
+  RESET_ERROR: (state) => ({ ...state, error: null }),
+}
+
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
-  switch (action.type) {
-    case 'NEXT':
-      return {
-        ...state,
-        step: Math.min(state.step + 1, 2),
-        direction: 1,
-        error: null,
-      }
-    case 'BACK':
-      return {
-        ...state,
-        step: Math.max(state.step - 1, 0),
-        direction: -1,
-        error: null,
-      }
-    case 'SKIP':
-      return {
-        ...state,
-        step: Math.min(state.step + 1, 2),
-        direction: 1,
-        error: null,
-      }
-    case 'SET_NAME':
-      return { ...state, name: action.payload }
-    case 'SET_SYSTEM_PROMPT':
-      return { ...state, systemPrompt: action.payload }
-    case 'TOGGLE_TOOL': {
-      const tools = state.allowedTools.includes(action.payload)
-        ? state.allowedTools.filter((t) => t !== action.payload)
-        : [...state.allowedTools, action.payload]
-      return { ...state, allowedTools: tools }
-    }
-    case 'TOGGLE_MCP': {
-      const mcps = state.activeMCPs.includes(action.payload)
-        ? state.activeMCPs.filter((m) => m !== action.payload)
-        : [...state.activeMCPs, action.payload]
-      return { ...state, activeMCPs: mcps }
-    }
-    case 'SET_MCPS':
-      return { ...state, activeMCPs: action.payload }
-    case 'SET_TRIGGERS':
-      return { ...state, triggers: action.payload }
-    case 'SET_GUARDRAILS':
-      return { ...state, guardrails: action.payload }
-    case 'START_SUBMIT':
-      return { ...state, isSubmitting: true, error: null }
-    case 'SUBMIT_ERROR':
-      return { ...state, isSubmitting: false, error: action.payload }
-    case 'RESET_ERROR':
-      return { ...state, error: null }
-    default:
-      return state
-  }
+  const handler = wizardHandlers[action.type] as WizardHandler | undefined
+  return handler ? handler(state, action) : state
 }
 
 // ── Slug utility ───────────────────────────────────────────
@@ -185,14 +195,12 @@ export function CreateAgentWizard({
 
   // Derived values
   const agentId = slugify(state.name)
-  const [createTriggerCall] = useCreateTrigger(workspaceId ?? '', agentId)
-  const emailDomain = process.env.NEXT_PUBLIC_EMAIL_DOMAIN || 'mail.example.com'
   const agentEmail =
     workspaceConfig?.slug && agentId
-      ? `${agentId}@${workspaceConfig.slug}.${emailDomain}`
+      ? `${agentId}@${workspaceConfig.slug}.lazarusconnect.com`
       : agentId
-        ? `${agentId}@${emailDomain}`
-        : `@${emailDomain}`
+        ? `${agentId}@lazarusconnect.com`
+        : '@lazarusconnect.com'
 
   const canProceedStep0 =
     state.name.trim().length > 0 && state.systemPrompt.trim().length > 0
@@ -210,7 +218,7 @@ export function CreateAgentWizard({
         activeMCPs: state.activeMCPs,
         autoTriggerEmail: true,
         modelConfig: {
-          model: 'opus',
+          model: state.model,
           temperature: 0.5,
         },
         workspaceId: workspaceId || '',
@@ -276,7 +284,9 @@ export function CreateAgentWizard({
                 : trigger.taskDescription || 'Scheduled task'
 
           try {
-            const result = await createTriggerCall({
+            const result = await api.post<{
+              trigger: { id: string }
+            }>(`/api/workspaces/${workspaceId}/agents/${agentId}/triggers`, {
               type: trigger.type,
               name: triggerName,
               config,
@@ -380,26 +390,36 @@ export function CreateAgentWizard({
             transition={stepTransition}
             className='mx-auto max-w-3xl pb-8'>
             {state.step === 0 && (
-              <StepIdentity
-                name={state.name}
-                systemPrompt={state.systemPrompt}
-                allowedTools={state.allowedTools}
-                activeMCPs={state.activeMCPs}
-                availableMCPs={availableMCPs}
-                loadingMCPs={loadingMCPs}
-                agentEmail={agentEmail}
-                isDark={isDark}
-                onNameChange={(v) => dispatch({ type: 'SET_NAME', payload: v })}
-                onSystemPromptChange={(v) =>
-                  dispatch({ type: 'SET_SYSTEM_PROMPT', payload: v })
-                }
-                onToggleTool={(v) =>
-                  dispatch({ type: 'TOGGLE_TOOL', payload: v })
-                }
-                onToggleMCP={(v) =>
-                  dispatch({ type: 'TOGGLE_MCP', payload: v })
-                }
-              />
+              <div className='space-y-5'>
+                <StepIdentity
+                  name={state.name}
+                  systemPrompt={state.systemPrompt}
+                  allowedTools={state.allowedTools}
+                  activeMCPs={state.activeMCPs}
+                  availableMCPs={availableMCPs}
+                  loadingMCPs={loadingMCPs}
+                  agentEmail={agentEmail}
+                  isDark={isDark}
+                  onNameChange={(v) =>
+                    dispatch({ type: 'SET_NAME', payload: v })
+                  }
+                  onSystemPromptChange={(v) =>
+                    dispatch({ type: 'SET_SYSTEM_PROMPT', payload: v })
+                  }
+                  onToggleTool={(v) =>
+                    dispatch({ type: 'TOGGLE_TOOL', payload: v })
+                  }
+                  onToggleMCP={(v) =>
+                    dispatch({ type: 'TOGGLE_MCP', payload: v })
+                  }
+                />
+                <ModelSelector
+                  value={state.model}
+                  onChange={(m) => dispatch({ type: 'SET_MODEL', payload: m })}
+                  isDark={isDark}
+                  size='medium'
+                />
+              </div>
             )}
 
             {state.step === 1 && (

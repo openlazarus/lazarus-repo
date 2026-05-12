@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN npm run build
 
 # ---
 
-FROM node:20-alpine AS runner
+FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
 RUN addgroup -S lazarus && adduser -S lazarus -G lazarus
 
