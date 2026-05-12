@@ -1,5 +1,5 @@
-import * as os from 'os'
 import { getAgentRuntime } from '@domains/agent/runtime'
+import { normalizeModel } from '@domains/agent/runtime/models'
 import {
   recordApprovalRequestedOnRun,
   recordApprovalResolvedOnRun,
@@ -529,7 +529,7 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
             mcpServers: allMcpServers, // Include both custom tools and workspace MCPs
             maxTurns: request.maxTurns || MAX_TURNS.executor,
             cwd: actualWorkspacePath, // Use actual workspace path (may be legacy path)
-            model: agent.modelConfig.model,
+            model: normalizeModel(agent.modelConfig.model),
             // Note: temperature, maxTokens, topP are not supported by Claude Agent SDK
             // These would need to be handled differently if model config is needed
             // Use 'default' mode so the SDK calls our canUseTool callback for every tool.
@@ -757,7 +757,7 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
                 ...filterServerSecrets(process.env),
                 ENABLE_TOOL_SEARCH: 'auto:5',
                 PWD: actualWorkspacePath,
-                HOME: process.env.HOME || os.homedir(),
+                HOME: process.env.HOME || '/mnt/sdc',
                 WORKSPACE_PATH: actualWorkspacePath,
                 MCP_REMOTE_CONFIG_DIR: `${actualWorkspacePath}/.mcp-auth`,
                 LAZARUS_WORKSPACE_ID: request.workspaceId,
@@ -1122,8 +1122,7 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
 
     // Add communication context with available agents
     prompt += `\n## Communication\n`
-    const emailDomain = process.env.EMAIL_DOMAIN || 'mail.example.com'
-    prompt += `Your email: ${agent.id}@${workspaceSlug}.${emailDomain}\n\n`
+    prompt += `Your email: ${agent.id}@${workspaceSlug}.lazarusconnect.com\n\n`
 
     // Load and list available workspace agents
     const workspaceAgents = await this.loadWorkspaceAgents(workspace.path, workspaceSlug, agent.id)
@@ -1246,7 +1245,7 @@ ${task}
               id: config.id || entry.name,
               name: config.name || entry.name,
               description: config.description || 'No description',
-              email: `${entry.name}@${workspaceSlug}.${process.env.EMAIL_DOMAIN || 'mail.example.com'}`,
+              email: `${entry.name}@${workspaceSlug}.lazarusconnect.com`,
             })
           }
         } catch (e) {
@@ -1354,7 +1353,7 @@ ${task}
           mcpServers: allMcpServers,
           maxTurns: request.maxTurns || MAX_TURNS.executor,
           cwd: workspace.path,
-          model: agent.modelConfig.model,
+          model: normalizeModel(agent.modelConfig.model),
           permissionMode: 'default' as const,
           // Sandbox: restrict Bash commands to workspace directory
           sandbox: {

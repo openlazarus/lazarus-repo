@@ -199,6 +199,7 @@ export class RuntimeTracer implements IAgentRuntime {
                     workspaceId: workspaceIdStr,
                     type: 'llm_tokens',
                     value: totalTokens,
+                    model: request.options.model ?? undefined,
                     inputTokens,
                     outputTokens,
                     cacheReadTokens: m.usage.cache_read_input_tokens ?? 0,

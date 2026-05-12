@@ -10,6 +10,7 @@ export type UsageEventInput = {
   workspaceId: string
   type: UsageEventType
   value: number
+  model?: string
   inputTokens?: number
   outputTokens?: number
   cacheReadTokens?: number
@@ -38,6 +39,7 @@ export const reportUsage = (event: UsageEventInput): void => {
   if (event.cacheWriteTokens !== undefined)
     fields.push('cacheWriteTokens', String(event.cacheWriteTokens))
   if (event.platformSource) fields.push('platformSource', event.platformSource)
+  if (event.model) fields.push('model', event.model)
 
   redis
     .xadd(USAGE_STREAM_KEY, '*', ...fields)
