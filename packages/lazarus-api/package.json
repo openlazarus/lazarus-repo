@@ -4,6 +4,7 @@
   "description": "Lazarus TypeScript Implementation - Institutional Memory System",
   "private": true,
   "main": "dist/index.js",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "precommit": "lint-staged",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -19,8 +20,8 @@
     "db:migrate": "prisma migrate dev",
     "test:init": "tsx scripts/test-init.ts",
     "test:client": "tsx scripts/test-client.ts",
-    "test:setup": "npm run test:init && npm run dev",
-    "test:all": "npm run test:init && npm run test:client",
+    "test:setup": "pnpm run test:init && pnpm run dev",
+    "test:all": "pnpm run test:init && pnpm run test:client",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

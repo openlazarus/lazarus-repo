@@ -35,7 +35,7 @@ function findAndKillMCPProcesses(
   let commandPattern: string | null = null
   if (serverConfig) {
     const allParts = [serverConfig.command, ...(serverConfig.args || [])].filter(Boolean)
-    const genericParts = new Set(['npx', 'node', 'npm', '-y', 'exec'])
+    const genericParts = new Set(['npx', 'node', 'npm', 'pnpm', 'pnpx', '-y', 'exec'])
     const specificPart = allParts.find((part) => !genericParts.has(part!) && !part!.startsWith('-'))
     if (specificPart) {
       commandPattern = specificPart

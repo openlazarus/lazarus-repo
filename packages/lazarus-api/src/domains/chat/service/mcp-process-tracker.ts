@@ -19,7 +19,7 @@ export const MCP_SESSION_ENV_KEY = 'LAZARUS_CHAT_SESSION_ID'
 
 function findCandidatePids(): number[] {
   try {
-    const output = execSync('pgrep -u lazarus -f "node|npm"', {
+    const output = execSync('pgrep -u lazarus -f "node|npm|pnpm"', {
       encoding: 'utf-8',
       timeout: 5_000,
     })
