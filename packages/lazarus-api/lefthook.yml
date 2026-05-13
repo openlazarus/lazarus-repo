@@ -2,4 +2,4 @@ pre-commit:
   commands:
     lint:
       glob: "*.ts"
-      run: npm run precommit
+      run: pnpm run precommit

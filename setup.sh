@@ -41,4 +41,13 @@ else
 fi
 
 lefthook install
-echo "Done. Git hooks are ready."
+echo "Git hooks installed."
+
+if command -v corepack &> /dev/null; then
+  corepack enable
+  echo "Corepack enabled. pnpm pinned via packageManager fields in each package."
+else
+  echo "WARNING: corepack not found. Install Node 16.10+ and run 'corepack enable' before 'pnpm install'."
+fi
+
+echo "Done."

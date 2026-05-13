@@ -1038,7 +1038,7 @@ export class WorkspaceAgentExecutor implements IWorkspaceAgentExecutor {
 
     let candidatePids: number[] = []
     try {
-      const pgrepOutput = execSync('pgrep -u lazarus -f "node|npm"', {
+      const pgrepOutput = execSync('pgrep -u lazarus -f "node|npm|pnpm"', {
         encoding: 'utf-8',
         timeout: 5000,
       })

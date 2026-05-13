@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "node dev-with-qr.mjs",
     "dev:no-network": "next dev",
@@ -11,9 +12,9 @@
     "start:prod": "next start -p ${PORT:-3000}",
     "start-v0-specialist": "tsx scripts/start-v0-specialist.ts",
     "start-sqlite-specialist": "tsx scripts/start-sqlite-specialist.ts",
-    "qa": "npm run lint && npm run type-check && npm run test",
-    "qa:fix": "npm run lint:fix && npm run format",
-    "qa:full": "npm run qa:fix && npm run test",
+    "qa": "pnpm run lint && pnpm run type-check && pnpm run test",
+    "qa:fix": "pnpm run lint:fix && pnpm run format",
+    "qa:full": "pnpm run qa:fix && pnpm run test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "precommit": "lint-staged",
@@ -26,9 +27,9 @@
     "test:coverage": "jest --coverage",
     "clean": "rm -rf .next node_modules coverage",
     "clean:cache": "rm -rf .next node_modules/.cache",
-    "reset": "npm run clean && rm -f package-lock.json && npm cache clean --force && npm install",
-    "deps:check": "npx npm-check-updates",
-    "deps:update": "npx npm-check-updates -u && npm install"
+    "reset": "pnpm run clean && rm -f pnpm-lock.yaml && pnpm store prune && pnpm install",
+    "deps:check": "pnpm dlx npm-check-updates",
+    "deps:update": "pnpm dlx npm-check-updates -u && pnpm install"
   },
   "dependencies": {
     "@deepgram/sdk": "^3.3.0",

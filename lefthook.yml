@@ -4,8 +4,8 @@ pre-commit:
     lint-api:
       root: "packages/lazarus-api/"
       glob: "*.ts"
-      run: npm run precommit
+      run: pnpm run precommit
     lint-ui:
       root: "packages/lazarus-ui/"
       glob: "*.{js,jsx,ts,tsx,css,scss,md,json,html}"
-      run: npm run precommit
+      run: pnpm run precommit
