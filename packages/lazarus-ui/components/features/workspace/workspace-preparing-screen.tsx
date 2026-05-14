@@ -29,7 +29,7 @@ const NOT_PROVISIONED_SUBLINE =
 type ScreenState = 'preparing' | 'errored' | 'not_provisioned'
 
 const initialState = (status?: WorkspaceStatus): ScreenState => {
-  if (!status) return 'not_provisioned'
+  if (!status || status === 'not_provisioned') return 'not_provisioned'
   if (status === 'unhealthy') return 'errored'
   return 'preparing'
 }

@@ -340,7 +340,8 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
                   const status = workspace.status
                   const isStarting = status === 'starting'
                   const isFailed = status === 'unhealthy'
-                  const isNotProvisioned = !status
+                  const isNotProvisioned =
+                    !status || status === 'not_provisioned'
                   const isProvisioningNow = provisioningIds.has(workspace.id)
                   const interactive =
                     status === 'healthy' && !isProvisioningNow
