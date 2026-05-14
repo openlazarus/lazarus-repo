@@ -16,7 +16,7 @@ import { createLogger } from '@utils/logger'
 import { readWorkspaceFile, PLATFORM_SIZE_LIMITS } from '@utils/workspace-file-reader'
 
 const log = createLogger('integration-channel-tools')
-import { AttachmentBuilder } from 'discord.js'
+// AttachmentBuilder unused after REST-direct refactor; multipart attachments TODO
 import {
   toolResult,
   toolError,
