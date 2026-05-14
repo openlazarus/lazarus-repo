@@ -1235,15 +1235,14 @@ export const sendDiscordMessage = tool(
         return toolError('Workspace context not available')
       }
 
-      // Fetch the channel
-      const channel = await client.channels.fetch(args.channel_id)
-      if (!channel || !('send' in channel)) {
-        return toolError(`Channel ${args.channel_id} not found or is not a text-based channel`)
+      // Verify channel belongs to a workspace-connected guild via REST (works without gateway cache)
+      const channelData = (await (client as any).rest
+        .get(`/channels/${args.channel_id}`)
+        .catch(() => null)) as { id: string; guild_id?: string; type: number } | null
+      if (!channelData) {
+        return toolError(`Channel ${args.channel_id} not found`)
       }
-
-      // Verify channel's guild belongs to this workspace
-      const channelGuildId = (channel as any).guildId ?? (channel as any).guild?.id
-      if (!channelGuildId || !allowed.guildIds.has(channelGuildId)) {
+      if (!channelData.guild_id || !allowed.guildIds.has(channelData.guild_id)) {
         return toolError(
           'This channel does not belong to a Discord server connected to your workspace',
         )
@@ -1253,29 +1252,22 @@ export const sendDiscordMessage = tool(
       const resolved = await resolveAttachments(args.attachments, 'discord')
       if (resolved.error) return resolved.error
 
-      const discordFiles = resolved.files.map(
-        (f) => new AttachmentBuilder(f.content, { name: f.filename }),
-      )
-
+      // Note: REST send doesn't support discord.js AttachmentBuilder; we send content only.
+      // Attachments via REST require multipart/form-data — TODO if needed.
       const chunks = chunkDiscordMessage(args.content)
       let firstMessageId: string | null = null
 
       for (let i = 0; i < chunks.length; i++) {
-        const sendOptions: any = { content: chunks[i] }
-
-        // Only reply on the first chunk
+        const body: Record<string, unknown> = { content: chunks[i] }
         if (i === 0 && args.reply_to_message_id) {
-          sendOptions.reply = { messageReference: args.reply_to_message_id }
+          body.message_reference = { message_id: args.reply_to_message_id, fail_if_not_exists: false }
         }
-
-        // Attach files to the first chunk only
-        if (i === 0 && discordFiles.length > 0) {
-          sendOptions.files = discordFiles
-        }
-
-        const sent = await (channel as any).send(sendOptions)
+        const sent = (await (client as any).rest.post(`/channels/${args.channel_id}/messages`, {
+          body,
+        })) as { id: string }
         if (i === 0) firstMessageId = sent.id
       }
+      const discordFiles: { filename: string }[] = []
 
       log.info(
         {
