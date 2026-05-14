@@ -450,7 +450,16 @@ class DiscordWebhookController {
       mentionedBot: boolean
       isDM: boolean
       referencedMessageId?: string
-      attachments?: Array<{ id: string; filename: string; url: string; contentType?: string }>
+      attachments?: Array<{
+        id: string
+        filename: string
+        url: string
+        size: number
+        proxy_url?: string
+        content_type?: string
+        width?: number
+        height?: number
+      }>
     }
     if (!message?.messageId || !message?.channelId) {
       log.warn('Missing required fields on gateway message')
