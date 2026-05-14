@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs/promises'
 import type { MCPConfiguration, MCPWorkspaceServerConfig } from '@domains/mcp/types/mcp.types'
 import type { IMCPConfigManager } from './mcp-config-manager.interface'
+import { getPreset } from '@infrastructure/config/mcp-presets'
 import { createLogger } from '@utils/logger'
 const log = createLogger('mcp-config-manager')
 
@@ -86,11 +87,30 @@ export class MCPConfigManager implements IMCPConfigManager {
     const outServers: Record<string, MCPWorkspaceServerConfig> = {}
     for (const [name, server] of Object.entries(config.mcpServers || {})) {
       if (server.enabled !== false) {
-        outServers[name] = this.withWorkspaceEnv(server, workspacePath)
+        outServers[name] = this.prepareServerForSDK(server, workspacePath)
       }
     }
     const sdkConfig: MCPConfiguration = { ...config, mcpServers: outServers }
     await fs.writeFile(sdkPath, JSON.stringify(sdkConfig, null, 2))
+  }
+
+  private prepareServerForSDK(
+    server: MCPWorkspaceServerConfig,
+    workspacePath: string,
+  ): MCPWorkspaceServerConfig {
+    const refreshed = this.refreshPresetPath(server)
+    return this.withWorkspaceEnv(refreshed, workspacePath)
+  }
+
+  // Re-resolves command + args from MCP_PRESETS at write time. Workspaces
+  // created before preset paths were portable (commit d5f06a1) saved an
+  // absolute path that no longer resolves after the AMI/runtime migration,
+  // which silently breaks tool discovery in the Agent SDK.
+  private refreshPresetPath(server: MCPWorkspaceServerConfig): MCPWorkspaceServerConfig {
+    if (!server.preset_id) return server
+    const preset = getPreset(server.preset_id)
+    if (!preset) return server
+    return { ...server, command: preset.command, args: preset.args }
   }
 
   private withWorkspaceEnv(
