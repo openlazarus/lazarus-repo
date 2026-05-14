@@ -394,7 +394,62 @@ async function sendFollowUp(
   }
 }
 
+async function postDiscordMessage(
+  channelId: string,
+  content: string,
+  replyTo?: string,
+): Promise<void> {
+  const token = process.env.DISCORD_BOT_TOKEN
+  if (!token) {
+    log.warn('DISCORD_BOT_TOKEN not configured — cannot reply')
+    return
+  }
+  try {
+    const body: Record<string, unknown> = { content }
+    if (replyTo) body.message_reference = { message_id: replyTo, fail_if_not_exists: false }
+    const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bot ${token}` },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      log.error({ status: response.status, body: await response.text() }, 'discord reply failed')
+    }
+  } catch (error) {
+    log.error({ err: error }, 'Error posting discord reply via REST')
+  }
+}
+
 class DiscordWebhookController {
+  async handleGatewayMessage(req: Request, res: Response) {
+    const message = req.body as {
+      messageId: string
+      guildId: string | null
+      channelId: string
+      authorId: string
+      authorName: string
+      content: string
+      mentionedBot: boolean
+      isDM: boolean
+      referencedMessageId?: string
+      attachments?: Array<{ id: string; filename: string; url: string; contentType?: string }>
+    }
+    if (!message?.messageId || !message?.channelId) {
+      log.warn('Missing required fields on gateway message')
+      throw new BadRequestError('Missing required fields')
+    }
+
+    res.status(202).json({ accepted: true })
+
+    const sendResponse = async (content: string, replyTo?: string): Promise<void> => {
+      await postDiscordMessage(message.channelId, content, replyTo ?? message.messageId)
+    }
+
+    discordService
+      .processMessage({ ...message, attachments: message.attachments ?? [] }, sendResponse)
+      .catch((error) => log.error({ err: error }, 'gateway processMessage error'))
+  }
+
   async handleInteraction(req: Request, res: Response) {
     if (!(await verifyDiscordRequest(req))) {
       log.warn('Invalid signature')
