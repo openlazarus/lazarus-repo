@@ -4,6 +4,10 @@ import { discordWebhookController } from '@domains/discord/controller/discord-we
 
 const router = Router()
 
+router.post('/', instanceAuth, (req, res) =>
+  discordWebhookController.handleForwardedInteraction(req, res),
+)
+
 router.post('/message', instanceAuth, (req, res) =>
   discordWebhookController.handleGatewayMessage(req, res),
 )

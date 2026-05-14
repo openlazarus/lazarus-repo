@@ -420,6 +420,24 @@ async function postDiscordMessage(
   }
 }
 
+async function dispatchInteraction(req: Request, res: Response): Promise<Response | void> {
+  const interaction = req.body
+  const { type } = interaction
+  log.info(`Received interaction type: ${type}`)
+  try {
+    const interactionHandler = DISCORD_INTERACTION_HANDLERS[type]
+    if (interactionHandler) return await interactionHandler(req, res)
+    log.warn(`Unknown interaction type: ${type}`)
+    throw new BadRequestError('Unknown interaction type')
+  } catch (error) {
+    log.error({ err: error }, 'Error handling interaction')
+    return res.json({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: { content: 'Sorry, an error occurred while processing your request.', flags: 64 },
+    })
+  }
+}
+
 class DiscordWebhookController {
   async handleGatewayMessage(req: Request, res: Response) {
     const message = req.body as {
@@ -455,29 +473,11 @@ class DiscordWebhookController {
       log.warn('Invalid signature')
       throw new UnauthorizedError('Invalid request signature')
     }
+    return dispatchInteraction(req, res)
+  }
 
-    const interaction = req.body
-    const { type } = interaction
-
-    log.info(`Received interaction type: ${type}`)
-
-    try {
-      const interactionHandler = DISCORD_INTERACTION_HANDLERS[type]
-      if (interactionHandler) {
-        return await interactionHandler(req, res)
-      }
-      log.warn(`Unknown interaction type: ${type}`)
-      throw new BadRequestError('Unknown interaction type')
-    } catch (error) {
-      log.error({ err: error }, 'Error handling interaction')
-      return res.json({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: 'Sorry, an error occurred while processing your request.',
-          flags: 64,
-        },
-      })
-    }
+  async handleForwardedInteraction(req: Request, res: Response) {
+    return dispatchInteraction(req, res)
   }
 }
 
