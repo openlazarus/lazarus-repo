@@ -59,7 +59,11 @@ async function main() {
       const discordListenerEnabled = process.env.DISCORD_LISTENER_ENABLED === 'true'
       const discordBot = getDiscordBot()
       if (!discordListenerEnabled) {
-        logger.info('Discord listener disabled (DISCORD_LISTENER_ENABLED != true), skipping...')
+        if (discordBot.isConfigured()) {
+          await discordBot.startRestOnly()
+        } else {
+          logger.info('Discord bot not configured (DISCORD_BOT_TOKEN not set), skipping REST-only init...')
+        }
       } else if (discordBot.isConfigured()) {
         await discordBot.start()
         logger.info('Discord bot started successfully!')
