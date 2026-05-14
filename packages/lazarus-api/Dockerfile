@@ -41,6 +41,7 @@ RUN python3 -m venv "$VIRTUAL_ENV" \
       beautifulsoup4 \
       lxml \
       markitdown \
+      mysql-connector-python \
       numpy \
       openpyxl \
       pandas \
@@ -48,13 +49,17 @@ RUN python3 -m venv "$VIRTUAL_ENV" \
       pdfminer.six \
       pdfplumber \
       pillow \
+      psycopg2-binary \
+      pymongo \
       pypdf \
       pypdfium2 \
       pytesseract \
       python-dateutil \
       PyYAML \
+      redis \
       reportlab \
-      requests
+      requests \
+      sqlalchemy
 
 # Match existing on-disk ownership (uid 100 / gid 101 used by every workspace VM's restored data).
 RUN if getent group  101 >/dev/null; then groupdel "$(getent group  101 | cut -d: -f1)"; fi \
