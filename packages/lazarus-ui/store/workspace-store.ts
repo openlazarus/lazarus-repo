@@ -20,6 +20,10 @@ export interface Workspace {
   memberCount?: number
   agentCount?: number
   needsOnboarding?: boolean
+  /** Provisioning / health state of the underlying workspace VM. */
+  status?: 'starting' | 'healthy' | 'unhealthy'
+  /** Public domain URL for the workspace VM. */
+  domainUrl?: string
 }
 
 /**

@@ -9,6 +9,7 @@ import Spinner from '@/components/ui/spinner'
 import { useWorkspace } from '@/hooks/core/use-workspace'
 import { useCreateWorkspace } from '@/hooks/features/workspace/use-create-workspace'
 import { useProvisioningWatcher } from '@/hooks/features/workspace/use-provisioning-watcher'
+import { useProvisionWorkspace } from '@/hooks/features/workspace/use-provision-workspace'
 import { cn } from '@/lib/utils'
 import { Workspace } from '@/model/workspace'
 import { useWorkspaceStore } from '@/store/workspace-store'
@@ -98,6 +99,8 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false)
   const [createWorkspace] = useCreateWorkspace()
+  const { provision } = useProvisionWorkspace()
+  const [provisioningIds, setProvisioningIds] = useState<Set<string>>(new Set())
 
   // Get current workspace
   const currentWorkspace = useMemo(
@@ -159,11 +162,9 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
     })
 
     if (!loading && workspaces.length > 0 && !activeWorkspaceId) {
-      // Skip workspaces that haven't finished provisioning — selecting them
-      // would route the UI at a workspace VM that isn't ready yet.
-      const ready = workspaces.find(
-        (w) => (w.status ?? 'healthy') === 'healthy',
-      )
+      // Skip workspaces that haven't finished provisioning OR don't have a VM
+      // at all — selecting them would route the UI at a VM that isn't ready.
+      const ready = workspaces.find((w) => w.status === 'healthy')
       if (ready) {
         console.log(
           '[WorkspaceSelector] Auto-selecting first ready workspace:',
@@ -181,12 +182,28 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
   })
 
   const handleWorkspaceSelect = (workspace: Workspace) => {
-    if ((workspace.status ?? 'healthy') !== 'healthy') {
-      // Provisioning or failed — don't switch active workspace yet.
+    if (workspace.status !== 'healthy') {
+      // Not provisioned / provisioning / failed — don't switch active workspace yet.
       return
     }
     selectWorkspace(workspace.id)
     setIsExpanded(false)
+  }
+
+  const handleProvision = async (workspaceId: string) => {
+    setProvisioningIds((prev) => new Set(prev).add(workspaceId))
+    try {
+      await provision(workspaceId)
+      await refreshWorkspaces()
+    } catch (err) {
+      console.error('[WorkspaceSelector] provision failed', err)
+    } finally {
+      setProvisioningIds((prev) => {
+        const next = new Set(prev)
+        next.delete(workspaceId)
+        return next
+      })
+    }
   }
 
   const handleAddWorkspace = async () => {
@@ -320,25 +337,31 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
               {sortedWorkspaces
                 .filter((workspace) => workspace.id !== activeWorkspaceId)
                 .map((workspace, index) => {
-                  const status = workspace.status ?? 'healthy'
+                  const status = workspace.status
                   const isStarting = status === 'starting'
                   const isFailed = status === 'unhealthy'
-                  const interactive = !isStarting && !isFailed
+                  const isNotProvisioned = !status
+                  const isProvisioningNow = provisioningIds.has(workspace.id)
+                  const interactive =
+                    status === 'healthy' && !isProvisioningNow
                   return (
-                    <m.button
+                    <m.div
                       key={workspace.id}
                       initial={{ x: -10, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.05 * index, duration: 0.2 }}
-                      onClick={() => handleWorkspaceSelect(workspace)}
-                      disabled={!interactive}
-                      aria-disabled={!interactive}
                       className={cn(
-                        'w-full rounded-lg px-3 py-2 text-left transition-colors',
+                        'w-full rounded-lg px-3 py-2 transition-colors',
                         interactive
-                          ? 'hover:bg-[hsl(var(--border))]'
+                          ? 'cursor-pointer hover:bg-[hsl(var(--border))]'
                           : 'cursor-default opacity-70',
-                      )}>
+                      )}
+                      role={interactive ? 'button' : undefined}
+                      onClick={
+                        interactive
+                          ? () => handleWorkspaceSelect(workspace)
+                          : undefined
+                      }>
                       <div className='flex items-center gap-2'>
                         <WorkspaceIcon
                           workspace={workspace}
@@ -355,7 +378,7 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
                                 {workspace.teamName}
                               </span>
                             )}
-                            {isStarting && (
+                            {(isStarting || isProvisioningNow) && (
                               <span className='inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
                                 <Spinner size='sm' />
                                 Provisioning
@@ -366,12 +389,19 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
                                 Failed
                               </span>
                             )}
+                            {isNotProvisioned && !isProvisioningNow && (
+                              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--text-tertiary))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--text-tertiary))]'>
+                                Not provisioned
+                              </span>
+                            )}
                           </div>
                           <div className='truncate text-[10px] text-[hsl(var(--text-tertiary))]'>
-                            {isStarting ? (
+                            {isStarting || isProvisioningNow ? (
                               'Booting workspace VM…'
                             ) : isFailed ? (
-                              'Provisioning failed — try again or delete'
+                              'Provisioning failed — try again'
+                            ) : isNotProvisioned ? (
+                              'Workspace has no VM yet'
                             ) : (
                               <WorkspaceAgentCount
                                 workspaceId={workspace.id}
@@ -380,8 +410,19 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
                             )}
                           </div>
                         </div>
+                        {(isNotProvisioned || isFailed) && !isProvisioningNow && (
+                          <button
+                            type='button'
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleProvision(workspace.id)
+                            }}
+                            className='flex-shrink-0 rounded-md bg-[hsl(var(--lazarus-blue))] px-2 py-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90'>
+                            Provision
+                          </button>
+                        )}
                       </div>
-                    </m.button>
+                    </m.div>
                   )
                 })}
 
