@@ -1242,7 +1242,8 @@ export const sendDiscordMessage = tool(
       }
 
       // Verify channel's guild belongs to this workspace
-      if (!(channel as any).guild || !allowed.guildIds.has((channel as any).guild.id)) {
+      const channelGuildId = (channel as any).guildId ?? (channel as any).guild?.id
+      if (!channelGuildId || !allowed.guildIds.has(channelGuildId)) {
         return toolError(
           'This channel does not belong to a Discord server connected to your workspace',
         )
@@ -1272,7 +1273,7 @@ export const sendDiscordMessage = tool(
           sendOptions.files = discordFiles
         }
 
-        const sent = await channel.send(sendOptions)
+        const sent = await (channel as any).send(sendOptions)
         if (i === 0) firstMessageId = sent.id
       }
 
