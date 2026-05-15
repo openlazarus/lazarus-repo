@@ -181,29 +181,11 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
     )
   }
 
-  if (showPreparingWorkspace && selectedWorkspace) {
-    return (
-      <m.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className='flex h-screen items-center justify-center bg-background text-foreground'>
-        <WorkspacePreparingScreen
-          workspaceId={selectedWorkspace.id}
-          ownerId={selectedWorkspace.ownerId}
-          status={
-            selectedStatus as
-              | 'starting'
-              | 'unhealthy'
-              | 'healthy'
-              | 'not_provisioned'
-              | 'stopped'
-              | undefined
-          }
-        />
-      </m.div>
-    )
-  }
+  // NOTE: when the active workspace isn't healthy we render the preparing
+  // screen *inside* the layout chrome (further down) instead of an early
+  // return, so the sidebar + workspace selector stay accessible. Users with
+  // multiple workspaces can switch out of a stopped/unhealthy active one
+  // without being trapped.
 
   // Mobile-only view: Chat + Settings access
   if (isMobile) {
@@ -856,7 +838,23 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
 
             {/* Page Content */}
             <div className='flex-1 overflow-hidden'>
-              <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+              {showPreparingWorkspace && selectedWorkspace ? (
+                <WorkspacePreparingScreen
+                  workspaceId={selectedWorkspace.id}
+                  ownerId={selectedWorkspace.ownerId}
+                  status={
+                    selectedStatus as
+                      | 'starting'
+                      | 'unhealthy'
+                      | 'healthy'
+                      | 'not_provisioned'
+                      | 'stopped'
+                      | undefined
+                  }
+                />
+              ) : (
+                <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+              )}
             </div>
           </div>
         </m.div>
