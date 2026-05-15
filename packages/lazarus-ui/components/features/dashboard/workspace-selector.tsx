@@ -8,10 +8,12 @@ import { WorkspaceAgentCount } from '@/components/features/agents/workspace-agen
 import Spinner from '@/components/ui/spinner'
 import { useWorkspace } from '@/hooks/core/use-workspace'
 import { useCreateWorkspace } from '@/hooks/features/workspace/use-create-workspace'
-import { useProvisioningWatcher } from '@/hooks/features/workspace/use-provisioning-watcher'
 import { useProvisionWorkspace } from '@/hooks/features/workspace/use-provision-workspace'
+import { useProvisioningWatcher } from '@/hooks/features/workspace/use-provisioning-watcher'
+import { useStartWorkspace } from '@/hooks/features/workspace/use-start-workspace'
 import { cn } from '@/lib/utils'
 import { Workspace } from '@/model/workspace'
+import { useAuthStore } from '@/store/auth-store'
 import { useWorkspaceStore } from '@/store/workspace-store'
 
 interface WorkspaceSelectorProps {
@@ -85,6 +87,154 @@ function WorkspaceIcon({
   )
 }
 
+interface WorkspaceListItemProps {
+  workspace: Workspace
+  index: number
+  isDark: boolean
+  isProvisioningNow: boolean
+  isOwner: boolean
+  onSelect: (workspace: Workspace) => void
+  onProvision: (workspaceId: string) => void | Promise<void>
+  onStarted: () => void | Promise<void>
+}
+
+/**
+ * One row in the workspace list. Hosts the per-workspace `useStartWorkspace`
+ * hook so each row owns its own loading state — required since
+ * `useAuthPostLazarusApi` binds the workspace id into the path at hook
+ * construction.
+ */
+function WorkspaceListItem({
+  workspace,
+  index,
+  isDark,
+  isProvisioningNow,
+  isOwner,
+  onSelect,
+  onProvision,
+  onStarted,
+}: WorkspaceListItemProps) {
+  const [startWorkspaceVm, { loading: isStartingNow }] = useStartWorkspace(
+    workspace.id,
+  )
+
+  const status = workspace.status
+  const isStarting = status === 'starting'
+  const isFailed = status === 'unhealthy'
+  const isStopped = status === 'stopped'
+  const isNotProvisioned = !status || status === 'not_provisioned'
+  const interactive = status === 'healthy' && !isProvisioningNow
+
+  const handleStart = async () => {
+    try {
+      await startWorkspaceVm()
+      await onStarted()
+    } catch (err) {
+      console.error('[WorkspaceSelector] start failed', err)
+    }
+  }
+
+  return (
+    <m.div
+      initial={{ x: -10, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: 0.05 * index, duration: 0.2 }}
+      className={cn(
+        'w-full rounded-lg px-3 py-2 transition-colors',
+        interactive
+          ? 'cursor-pointer hover:bg-[hsl(var(--border))]'
+          : 'cursor-default opacity-70',
+      )}
+      role={interactive ? 'button' : undefined}
+      onClick={interactive ? () => onSelect(workspace) : undefined}>
+      <div className='flex items-center gap-2'>
+        <WorkspaceIcon workspace={workspace} isDark={isDark} size='sm' />
+        <div className='min-w-0 flex-1'>
+          <div className='flex items-center gap-2'>
+            <div className='truncate text-[13px] font-medium text-[hsl(var(--text-secondary))]'>
+              {workspace.name}
+            </div>
+            {workspace.teamName && (
+              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
+                {workspace.teamName}
+              </span>
+            )}
+            {(isStarting || isProvisioningNow) && (
+              <span className='inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
+                <Spinner size='sm' />
+                Provisioning
+              </span>
+            )}
+            {isFailed && (
+              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-500'>
+                Failed
+              </span>
+            )}
+            {isNotProvisioned && !isProvisioningNow && (
+              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--text-tertiary))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--text-tertiary))]'>
+                Not provisioned
+              </span>
+            )}
+            {isStopped && !isStartingNow && (
+              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--text-tertiary))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--text-tertiary))]'>
+                Asleep
+              </span>
+            )}
+            {isStartingNow && (
+              <span className='inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
+                <Spinner size='sm' />
+                Starting
+              </span>
+            )}
+          </div>
+          <div className='truncate text-[10px] text-[hsl(var(--text-tertiary))]'>
+            {isStarting || isProvisioningNow || isStartingNow ? (
+              'Booting workspace VM…'
+            ) : isFailed ? (
+              'Provisioning failed — try again'
+            ) : isStopped ? (
+              isOwner ? (
+                'Stopped after 30d idle — turn on to resume'
+              ) : (
+                'Stopped — owner can turn it back on'
+              )
+            ) : isNotProvisioned ? (
+              'Workspace has no VM yet'
+            ) : (
+              <WorkspaceAgentCount
+                workspaceId={workspace.id}
+                fallback={workspace.agentCount || 0}
+              />
+            )}
+          </div>
+        </div>
+        {(isNotProvisioned || isFailed) && !isProvisioningNow && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation()
+              void onProvision(workspace.id)
+            }}
+            className='flex-shrink-0 rounded-md bg-[hsl(var(--lazarus-blue))] px-2 py-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90'>
+            Provision
+          </button>
+        )}
+        {isStopped && isOwner && !isStartingNow && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation()
+              void handleStart()
+            }}
+            className='flex-shrink-0 rounded-md bg-[hsl(var(--lazarus-blue))] px-2 py-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90'>
+            Turn on
+          </button>
+        )}
+      </div>
+    </m.div>
+  )
+}
+
 export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
   const {
     workspaces,
@@ -100,6 +250,7 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false)
   const [createWorkspace] = useCreateWorkspace()
   const { provision } = useProvisionWorkspace()
+  const currentUserId = useAuthStore((s) => s.userId)
   const [provisioningIds, setProvisioningIds] = useState<Set<string>>(new Set())
 
   // Get current workspace
@@ -336,96 +487,21 @@ export const WorkspaceSelector = ({ isDark }: WorkspaceSelectorProps) => {
             <div className='max-h-[240px] space-y-0.5 overflow-y-auto px-4 pb-2 pt-1'>
               {sortedWorkspaces
                 .filter((workspace) => workspace.id !== activeWorkspaceId)
-                .map((workspace, index) => {
-                  const status = workspace.status
-                  const isStarting = status === 'starting'
-                  const isFailed = status === 'unhealthy'
-                  const isNotProvisioned =
-                    !status || status === 'not_provisioned'
-                  const isProvisioningNow = provisioningIds.has(workspace.id)
-                  const interactive =
-                    status === 'healthy' && !isProvisioningNow
-                  return (
-                    <m.div
-                      key={workspace.id}
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.05 * index, duration: 0.2 }}
-                      className={cn(
-                        'w-full rounded-lg px-3 py-2 transition-colors',
-                        interactive
-                          ? 'cursor-pointer hover:bg-[hsl(var(--border))]'
-                          : 'cursor-default opacity-70',
-                      )}
-                      role={interactive ? 'button' : undefined}
-                      onClick={
-                        interactive
-                          ? () => handleWorkspaceSelect(workspace)
-                          : undefined
-                      }>
-                      <div className='flex items-center gap-2'>
-                        <WorkspaceIcon
-                          workspace={workspace}
-                          isDark={isDark}
-                          size='sm'
-                        />
-                        <div className='min-w-0 flex-1'>
-                          <div className='flex items-center gap-2'>
-                            <div className='truncate text-[13px] font-medium text-[hsl(var(--text-secondary))]'>
-                              {workspace.name}
-                            </div>
-                            {workspace.teamName && (
-                              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
-                                {workspace.teamName}
-                              </span>
-                            )}
-                            {(isStarting || isProvisioningNow) && (
-                              <span className='inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[hsl(var(--lazarus-blue))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--lazarus-blue))]'>
-                                <Spinner size='sm' />
-                                Provisioning
-                              </span>
-                            )}
-                            {isFailed && (
-                              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-500'>
-                                Failed
-                              </span>
-                            )}
-                            {isNotProvisioned && !isProvisioningNow && (
-                              <span className='inline-flex flex-shrink-0 items-center rounded-md bg-[hsl(var(--text-tertiary))]/10 px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--text-tertiary))]'>
-                                Not provisioned
-                              </span>
-                            )}
-                          </div>
-                          <div className='truncate text-[10px] text-[hsl(var(--text-tertiary))]'>
-                            {isStarting || isProvisioningNow ? (
-                              'Booting workspace VM…'
-                            ) : isFailed ? (
-                              'Provisioning failed — try again'
-                            ) : isNotProvisioned ? (
-                              'Workspace has no VM yet'
-                            ) : (
-                              <WorkspaceAgentCount
-                                workspaceId={workspace.id}
-                                fallback={workspace.agentCount || 0}
-                              />
-                            )}
-                          </div>
-                        </div>
-                        {(isNotProvisioned || isFailed) && !isProvisioningNow && (
-                          <button
-                            type='button'
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              void handleProvision(workspace.id)
-                            }}
-                            className='flex-shrink-0 rounded-md bg-[hsl(var(--lazarus-blue))] px-2 py-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90'>
-                            Provision
-                          </button>
-                        )}
-                      </div>
-                    </m.div>
-                  )
-                })}
+                .map((workspace, index) => (
+                  <WorkspaceListItem
+                    key={workspace.id}
+                    workspace={workspace}
+                    index={index}
+                    isDark={isDark}
+                    isProvisioningNow={provisioningIds.has(workspace.id)}
+                    isOwner={
+                      !!currentUserId && workspace.ownerId === currentUserId
+                    }
+                    onSelect={handleWorkspaceSelect}
+                    onProvision={handleProvision}
+                    onStarted={refreshWorkspaces}
+                  />
+                ))}
 
               {/* Add Workspace Button */}
               <m.button

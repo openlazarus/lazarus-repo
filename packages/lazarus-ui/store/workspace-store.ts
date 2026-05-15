@@ -21,7 +21,7 @@ export interface Workspace {
   agentCount?: number
   needsOnboarding?: boolean
   /** Provisioning / health state of the underlying workspace VM. */
-  status?: 'starting' | 'healthy' | 'unhealthy' | 'not_provisioned'
+  status?: 'starting' | 'healthy' | 'unhealthy' | 'not_provisioned' | 'stopped'
   /** Public domain URL for the workspace VM. */
   domainUrl?: string
 }

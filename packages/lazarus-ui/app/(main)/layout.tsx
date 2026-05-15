@@ -190,12 +190,14 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
         className='flex h-screen items-center justify-center bg-background text-foreground'>
         <WorkspacePreparingScreen
           workspaceId={selectedWorkspace.id}
+          ownerId={selectedWorkspace.ownerId}
           status={
             selectedStatus as
               | 'starting'
               | 'unhealthy'
               | 'healthy'
               | 'not_provisioned'
+              | 'stopped'
               | undefined
           }
         />

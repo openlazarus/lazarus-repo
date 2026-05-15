@@ -10,11 +10,14 @@ import type {
   WorkspaceStatus,
 } from '@/hooks/features/workspace/types'
 import { useProvisioningWatcher } from '@/hooks/features/workspace/use-provisioning-watcher'
+import { useStartWorkspace } from '@/hooks/features/workspace/use-start-workspace'
 import { api } from '@/lib/api-client'
+import { useAuthStore } from '@/store/auth-store'
 
 interface WorkspacePreparingScreenProps {
   workspaceId: string
   status?: WorkspaceStatus
+  ownerId?: string
 }
 
 const HEADING = "We're preparing your workspace"
@@ -25,20 +28,31 @@ const ERROR_SUBLINE =
 const NOT_PROVISIONED_HEADING = 'This workspace has no VM yet'
 const NOT_PROVISIONED_SUBLINE =
   'Click below to provision the workspace. It will be ready in a couple of minutes.'
+const STOPPED_HEADING = 'This workspace is asleep'
+const STOPPED_SUBLINE_OWNER =
+  'It was stopped after 30 days of inactivity to save resources. Your data is safe — turn it back on to resume.'
+const STOPPED_SUBLINE_VIEWER =
+  'It was stopped after 30 days of inactivity. Only the workspace owner can turn it back on.'
 
-type ScreenState = 'preparing' | 'errored' | 'not_provisioned'
+type ScreenState = 'preparing' | 'errored' | 'not_provisioned' | 'stopped'
 
 const initialState = (status?: WorkspaceStatus): ScreenState => {
   if (!status || status === 'not_provisioned') return 'not_provisioned'
   if (status === 'unhealthy') return 'errored'
+  if (status === 'stopped') return 'stopped'
   return 'preparing'
 }
 
 export function WorkspacePreparingScreen({
   workspaceId,
   status,
+  ownerId,
 }: WorkspacePreparingScreenProps) {
   const { refreshWorkspaces } = useWorkspace()
+  const [startWorkspaceVm, { loading: isStartLoading }] =
+    useStartWorkspace(workspaceId)
+  const currentUserId = useAuthStore((s) => s.userId)
+  const isOwner = !!ownerId && !!currentUserId && ownerId === currentUserId
   const [isWorking, setIsWorking] = useState(false)
   const [screenState, setScreenState] = useState<ScreenState>(
     initialState(status),
@@ -74,6 +88,16 @@ export function WorkspacePreparingScreen({
     }
   }, [workspaceId, refreshWorkspaces])
 
+  const triggerStart = useCallback(async () => {
+    try {
+      await startWorkspaceVm()
+      setScreenState('preparing')
+      void refreshWorkspaces()
+    } catch {
+      setScreenState('errored')
+    }
+  }, [refreshWorkspaces, startWorkspaceVm])
+
   if (screenState === 'errored') {
     return (
       <ScreenShell>
@@ -100,6 +124,25 @@ export function WorkspacePreparingScreen({
           label='Provision workspace'
           loadingLabel='Provisioning…'
         />
+      </ScreenShell>
+    )
+  }
+
+  if (screenState === 'stopped') {
+    return (
+      <ScreenShell>
+        <Headline text={STOPPED_HEADING} />
+        <Subline
+          text={isOwner ? STOPPED_SUBLINE_OWNER : STOPPED_SUBLINE_VIEWER}
+        />
+        {isOwner && (
+          <ActionButton
+            onClick={triggerStart}
+            isLoading={isStartLoading}
+            label='Turn on'
+            loadingLabel='Starting…'
+          />
+        )}
       </ScreenShell>
     )
   }

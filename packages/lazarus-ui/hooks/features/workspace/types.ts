@@ -1,4 +1,9 @@
-export type WorkspaceStatus = 'starting' | 'healthy' | 'unhealthy' | 'not_provisioned'
+export type WorkspaceStatus =
+  | 'starting'
+  | 'healthy'
+  | 'unhealthy'
+  | 'not_provisioned'
+  | 'stopped'
 
 export type Workspace = {
   id: string
