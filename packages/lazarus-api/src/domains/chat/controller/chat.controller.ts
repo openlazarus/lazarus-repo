@@ -340,6 +340,23 @@ async function processChat(request: ChatRequest, userId: string, res: Response):
 
           systemPrompt = `You are ${agent.name}. ${systemPrompt}`
 
+          if (Array.isArray(agent.activeMCPs) && mcpServersConfig) {
+            const allowed = new Set(agent.activeMCPs)
+            const before = Object.keys(mcpServersConfig)
+            mcpServersConfig = Object.fromEntries(
+              Object.entries(mcpServersConfig).filter(([name]) => allowed.has(name)),
+            )
+            log.info(
+              {
+                agentId: agent.id,
+                activeMCPs: agent.activeMCPs,
+                kept: Object.keys(mcpServersConfig),
+                dropped: before.filter((n) => !allowed.has(n)),
+              },
+              'Filtered MCP servers by agent activeMCPs',
+            )
+          }
+
           agentGuardrails = agent.guardrails || []
           if (agentGuardrails.length > 0) {
             guardrailDisallowedTools = getDisallowedTools(agentGuardrails)

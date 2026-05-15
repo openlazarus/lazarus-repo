@@ -191,16 +191,18 @@ const collectAllPages = async <TInput extends object, TItem>(
   const rows: TItem[] = []
   let page = 1
   let lastPage = 1
-  let total = 0
+  let serverTotal = 0
   while (page <= lastPage && page <= maxPages) {
     const res = await fetchPage({ ...input, page, per_page: BULK_PER_PAGE })
     if (enforceInlineLimit && page === 1) assertUnderInlineLimit(res.meta.total)
     rows.push(...res.data)
-    total = res.meta.total
+    serverTotal = res.meta.total
     lastPage = res.meta.last_page
     page++
   }
-  return { rows, total, pagesFetched: page - 1, truncated: lastPage > maxPages }
+  const truncated = lastPage > maxPages
+  const total = truncated ? serverTotal : rows.length
+  return { rows, total, pagesFetched: page - 1, truncated }
 }
 
 const buildBulkResult = <T extends object>(

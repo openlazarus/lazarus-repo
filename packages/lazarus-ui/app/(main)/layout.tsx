@@ -191,7 +191,12 @@ function MemoryLayoutContent({ children }: { children: ReactNode }) {
         <WorkspacePreparingScreen
           workspaceId={selectedWorkspace.id}
           status={
-            selectedStatus as 'starting' | 'unhealthy' | 'healthy' | undefined
+            selectedStatus as
+              | 'starting'
+              | 'unhealthy'
+              | 'healthy'
+              | 'not_provisioned'
+              | undefined
           }
         />
       </m.div>

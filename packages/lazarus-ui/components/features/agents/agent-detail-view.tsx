@@ -28,6 +28,19 @@ import { AgentDetailOverview } from './agent-detail/agent-detail-overview'
 import { AgentDetailPlan } from './agent-detail/agent-detail-schedule'
 import type { GuardrailConfig } from './guardrails/guardrail-types'
 
+const AVAILABLE_TOOLS = [
+  'filesystem',
+  'read',
+  'write',
+  'edit',
+  'grep',
+  'glob',
+  'bash',
+  'mcp',
+  'web_search',
+  'web_fetch',
+]
+
 const DETAIL_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'plan', label: 'Plan' },
@@ -165,7 +178,9 @@ export function AgentDetails({
   const toggleTool = (tool: string) => {
     setEditedAgent((prev) => {
       if (!prev) return prev
-      const tools = prev.allowedTools || []
+      const tools = prev.allowedTools?.includes('*')
+        ? AVAILABLE_TOOLS
+        : prev.allowedTools || []
       return {
         ...prev,
         allowedTools: tools.includes(tool)
@@ -178,7 +193,9 @@ export function AgentDetails({
   const toggleMCP = (mcp: string) => {
     setEditedAgent((prev) => {
       if (!prev) return prev
-      const mcps = prev.activeMCPs || []
+      const mcps =
+        prev.activeMCPs ??
+        availableMCPs.filter((m) => m.enabled !== false).map((m) => m.name)
       return {
         ...prev,
         activeMCPs: mcps.includes(mcp)

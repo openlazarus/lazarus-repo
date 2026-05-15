@@ -1,0 +1,81 @@
+version: 0.2
+
+# Build + publish a lazarus-api tarball to the workspace deploy bucket.
+# Branch -> deploy prefix:
+#   main    -> production
+#   staging -> staging
+# Workspace VMs poll s3://lazarus-workspace-deploys-627206123760/lazarus-api/<prefix>/manifest.json
+# every 5 min (lazarus-update.timer) and auto-swap to the new tarball.
+
+env:
+  variables:
+    DEPLOY_BUCKET: lazarus-workspace-deploys-627206123760
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@9.15.0 --activate
+
+  pre_build:
+    commands:
+      - BRANCH="${CODEBUILD_WEBHOOK_HEAD_REF##refs/heads/}"
+      - |
+        case "$BRANCH" in
+          main)    DEPLOY_PREFIX=production ;;
+          staging) DEPLOY_PREFIX=staging ;;
+          *)
+            echo "Branch '$BRANCH' is not configured for publish — exiting cleanly."
+            exit 0
+            ;;
+        esac
+      - echo "Branch=$BRANCH -> DEPLOY_PREFIX=$DEPLOY_PREFIX"
+      - export DEPLOY_PREFIX
+      - SHORT_SHA="${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"
+      - export VERSION="${DEPLOY_PREFIX}-$(date -u +%Y%m%d-%H%M%S)-${SHORT_SHA}"
+      - echo "VERSION=$VERSION"
+
+  build:
+    commands:
+      - cd packages/lazarus-api
+      - pnpm install --frozen-lockfile
+      - pnpm build
+      # Re-install prod-only to get a clean node_modules tree
+      - rm -rf node_modules
+      - pnpm install --frozen-lockfile --prod
+      - TARBALL="/tmp/lazarus-api-${VERSION}.tar.gz"
+      - tar -czf "$TARBALL" --owner=0 --group=0 dist node_modules config prompts package.json
+      - SHA256=$(sha256sum "$TARBALL" | awk '{print $1}')
+      - SIZE=$(stat --printf='%s' "$TARBALL")
+      - echo "Tarball=$(numfmt --to=iec $SIZE) sha256=$SHA256"
+
+  post_build:
+    commands:
+      - |
+        if [ -z "${VERSION:-}" ]; then
+          echo "VERSION unset (probably an unconfigured branch); nothing to publish."
+          exit 0
+        fi
+      - aws s3 cp "$TARBALL" "s3://${DEPLOY_BUCKET}/lazarus-api/${DEPLOY_PREFIX}/lazarus-api-${VERSION}.tar.gz"
+      - |
+        jq -n \
+          --arg v  "$VERSION" \
+          --arg u  "s3://${DEPLOY_BUCKET}/lazarus-api/${DEPLOY_PREFIX}/lazarus-api-${VERSION}.tar.gz" \
+          --arg s  "$SHA256" \
+          --argjson z "$SIZE" \
+          --arg b  "$BRANCH" \
+          --arg c  "$CODEBUILD_RESOLVED_SOURCE_VERSION" \
+          '{version:$v, url:$u, sha256:$s, size_bytes:$z, branch:$b, commit:$c, built_at:(now|todate)}' \
+          > /tmp/manifest.json
+      - cat /tmp/manifest.json
+      # Upload manifest LAST so the tarball is always reachable before VMs see the new version.
+      - aws s3 cp /tmp/manifest.json "s3://${DEPLOY_BUCKET}/lazarus-api/${DEPLOY_PREFIX}/manifest.json"
+      - echo "Published $VERSION to s3://${DEPLOY_BUCKET}/lazarus-api/${DEPLOY_PREFIX}/"
+
+artifacts:
+  files:
+    - /tmp/manifest.json
+  discard-paths: yes

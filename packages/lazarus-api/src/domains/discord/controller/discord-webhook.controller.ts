@@ -394,35 +394,169 @@ async function sendFollowUp(
   }
 }
 
+async function postDiscordMessage(
+  channelId: string,
+  content: string,
+  replyTo?: string,
+  components?: unknown[],
+): Promise<string | null> {
+  const token = process.env.DISCORD_BOT_TOKEN
+  if (!token) {
+    log.warn('DISCORD_BOT_TOKEN not configured — cannot reply')
+    return null
+  }
+  try {
+    const body: Record<string, unknown> = { content }
+    if (replyTo) body.message_reference = { message_id: replyTo, fail_if_not_exists: false }
+    if (components) body.components = components
+    const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bot ${token}` },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      log.error({ status: response.status, body: await response.text() }, 'discord reply failed')
+      return null
+    }
+    const sent = (await response.json()) as { id: string }
+    return sent.id
+  } catch (error) {
+    log.error({ err: error }, 'Error posting discord reply via REST')
+    return null
+  }
+}
+
+async function patchDiscordMessage(
+  channelId: string,
+  messageId: string,
+  content: string,
+  components?: unknown[],
+): Promise<void> {
+  const token = process.env.DISCORD_BOT_TOKEN
+  if (!token) return
+  try {
+    const body: Record<string, unknown> = { content }
+    if (components !== undefined) body.components = components
+    const response = await fetch(
+      `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bot ${token}` },
+        body: JSON.stringify(body),
+      },
+    )
+    if (!response.ok) {
+      log.error({ status: response.status, body: await response.text() }, 'discord edit failed')
+    }
+  } catch (error) {
+    log.error({ err: error }, 'Error patching discord message via REST')
+  }
+}
+
+function stopButtonComponents(executionId: string): unknown[] {
+  return [
+    {
+      type: 1,
+      components: [
+        { type: 2, style: 4, label: 'Stop', custom_id: `stop_execution:${executionId}` },
+      ],
+    },
+  ]
+}
+
+async function dispatchInteraction(req: Request, res: Response): Promise<Response | void> {
+  const interaction = req.body
+  const { type } = interaction
+  log.info(`Received interaction type: ${type}`)
+  try {
+    const interactionHandler = DISCORD_INTERACTION_HANDLERS[type]
+    if (interactionHandler) return await interactionHandler(req, res)
+    log.warn(`Unknown interaction type: ${type}`)
+    throw new BadRequestError('Unknown interaction type')
+  } catch (error) {
+    log.error({ err: error }, 'Error handling interaction')
+    return res.json({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: { content: 'Sorry, an error occurred while processing your request.', flags: 64 },
+    })
+  }
+}
+
 class DiscordWebhookController {
+  async handleGatewayMessage(req: Request, res: Response) {
+    const message = req.body as {
+      messageId: string
+      guildId: string | null
+      channelId: string
+      authorId: string
+      authorName: string
+      content: string
+      mentionedBot: boolean
+      isDM: boolean
+      referencedMessageId?: string
+      attachments?: Array<{
+        id: string
+        filename: string
+        url: string
+        size: number
+        proxy_url?: string
+        content_type?: string
+        width?: number
+        height?: number
+      }>
+    }
+    if (!message?.messageId || !message?.channelId) {
+      log.warn('Missing required fields on gateway message')
+      throw new BadRequestError('Missing required fields')
+    }
+
+    res.status(202).json({ accepted: true })
+
+    const channelId = message.channelId
+    const sendResponse = async (content: string, replyTo?: string): Promise<void> => {
+      await postDiscordMessage(channelId, content, replyTo ?? message.messageId)
+    }
+
+    const sendStatusMessageWithButton = async (
+      content: string,
+      executionId: string,
+      replyTo?: string,
+    ): Promise<string> => {
+      const id = await postDiscordMessage(
+        channelId,
+        content,
+        replyTo ?? message.messageId,
+        stopButtonComponents(executionId),
+      )
+      return id ?? ''
+    }
+
+    const editStatusMessage = async (
+      chId: string,
+      messageId: string,
+      content: string,
+    ): Promise<void> => {
+      await patchDiscordMessage(chId, messageId, content, [])
+    }
+
+    discordService
+      .processMessage({ ...message, attachments: message.attachments ?? [] }, sendResponse, {
+        sendStatusMessageWithButton,
+        editStatusMessage,
+      })
+      .catch((error) => log.error({ err: error }, 'gateway processMessage error'))
+  }
+
   async handleInteraction(req: Request, res: Response) {
     if (!(await verifyDiscordRequest(req))) {
       log.warn('Invalid signature')
       throw new UnauthorizedError('Invalid request signature')
     }
+    return dispatchInteraction(req, res)
+  }
 
-    const interaction = req.body
-    const { type } = interaction
-
-    log.info(`Received interaction type: ${type}`)
-
-    try {
-      const interactionHandler = DISCORD_INTERACTION_HANDLERS[type]
-      if (interactionHandler) {
-        return await interactionHandler(req, res)
-      }
-      log.warn(`Unknown interaction type: ${type}`)
-      throw new BadRequestError('Unknown interaction type')
-    } catch (error) {
-      log.error({ err: error }, 'Error handling interaction')
-      return res.json({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: 'Sorry, an error occurred while processing your request.',
-          flags: 64,
-        },
-      })
-    }
+  async handleForwardedInteraction(req: Request, res: Response) {
+    return dispatchInteraction(req, res)
   }
 }
 

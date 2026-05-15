@@ -22,49 +22,84 @@ const SUBLINE = 'This will only take a moment.'
 const ERROR_HEADING = "We couldn't get your workspace ready"
 const ERROR_SUBLINE =
   'Something went wrong while setting things up. You can retry below.'
+const NOT_PROVISIONED_HEADING = 'This workspace has no VM yet'
+const NOT_PROVISIONED_SUBLINE =
+  'Click below to provision the workspace. It will be ready in a couple of minutes.'
+
+type ScreenState = 'preparing' | 'errored' | 'not_provisioned'
+
+const initialState = (status?: WorkspaceStatus): ScreenState => {
+  if (!status || status === 'not_provisioned') return 'not_provisioned'
+  if (status === 'unhealthy') return 'errored'
+  return 'preparing'
+}
 
 export function WorkspacePreparingScreen({
   workspaceId,
   status,
 }: WorkspacePreparingScreenProps) {
   const { refreshWorkspaces } = useWorkspace()
-  const [isRetrying, setIsRetrying] = useState(false)
-  const [errored, setErrored] = useState(status === 'unhealthy')
+  const [isWorking, setIsWorking] = useState(false)
+  const [screenState, setScreenState] = useState<ScreenState>(
+    initialState(status),
+  )
 
-  const pollableWorkspaces: PollableWorkspace[] = errored
-    ? []
-    : [{ id: workspaceId, status: 'starting' } as PollableWorkspace]
+  const pollableWorkspaces: PollableWorkspace[] =
+    screenState === 'preparing'
+      ? [{ id: workspaceId, status: 'starting' } as PollableWorkspace]
+      : []
 
   useProvisioningWatcher(pollableWorkspaces, (_id, finalStatus) => {
     if (finalStatus === 'healthy') {
       void refreshWorkspaces()
     } else {
-      setErrored(true)
+      setScreenState('errored')
     }
   })
 
   useEffect(() => {
-    if (status === 'unhealthy') setErrored(true)
+    setScreenState(initialState(status))
   }, [status])
 
-  const retry = useCallback(async () => {
-    setIsRetrying(true)
+  const trigger = useCallback(async () => {
+    setIsWorking(true)
     try {
       await api.post(`/api/workspaces/${workspaceId}/retry`, {})
-      setErrored(false)
+      setScreenState('preparing')
+      void refreshWorkspaces()
     } catch {
-      setErrored(true)
+      setScreenState('errored')
     } finally {
-      setIsRetrying(false)
+      setIsWorking(false)
     }
-  }, [workspaceId])
+  }, [workspaceId, refreshWorkspaces])
 
-  if (errored) {
+  if (screenState === 'errored') {
     return (
       <ScreenShell>
         <Headline text={ERROR_HEADING} />
         <Subline text={ERROR_SUBLINE} />
-        <RetryButton onClick={retry} isLoading={isRetrying} />
+        <ActionButton
+          onClick={trigger}
+          isLoading={isWorking}
+          label='Retry'
+          loadingLabel='Retrying…'
+        />
+      </ScreenShell>
+    )
+  }
+
+  if (screenState === 'not_provisioned') {
+    return (
+      <ScreenShell>
+        <Headline text={NOT_PROVISIONED_HEADING} />
+        <Subline text={NOT_PROVISIONED_SUBLINE} />
+        <ActionButton
+          onClick={trigger}
+          isLoading={isWorking}
+          label='Provision workspace'
+          loadingLabel='Provisioning…'
+        />
       </ScreenShell>
     )
   }
@@ -114,12 +149,16 @@ function Subline({ text }: { text: string }) {
   )
 }
 
-function RetryButton({
+function ActionButton({
   onClick,
   isLoading,
+  label,
+  loadingLabel,
 }: {
   onClick: () => void
   isLoading: boolean
+  label: string
+  loadingLabel: string
 }) {
   return (
     <button
@@ -127,7 +166,7 @@ function RetryButton({
       disabled={isLoading}
       className='mt-2 inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-60'>
       {isLoading ? <Spinner size='sm' /> : null}
-      {isLoading ? 'Retrying…' : 'Retry'}
+      {isLoading ? loadingLabel : label}
     </button>
   )
 }

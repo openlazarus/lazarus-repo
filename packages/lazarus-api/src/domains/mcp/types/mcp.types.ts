@@ -12,6 +12,9 @@ export interface MCPWorkspaceServerConfig {
   transport?: 'stdio' | 'http' | 'sse'
   enabled?: boolean
   description?: string
+  category?: string
+  icon?: string
+  preset_id?: string
 }
 
 export interface MCPServerReference {

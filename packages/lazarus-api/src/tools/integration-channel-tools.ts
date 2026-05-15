@@ -16,7 +16,7 @@ import { createLogger } from '@utils/logger'
 import { readWorkspaceFile, PLATFORM_SIZE_LIMITS } from '@utils/workspace-file-reader'
 
 const log = createLogger('integration-channel-tools')
-import { AttachmentBuilder } from 'discord.js'
+// AttachmentBuilder unused after REST-direct refactor; multipart attachments TODO
 import {
   toolResult,
   toolError,
@@ -70,6 +70,59 @@ async function resolveAttachments(
 
 // Re-export setDiscordClient for backward compatibility (discord-bot.ts imports it from here)
 export { setDiscordClient } from './discord-tool-helpers'
+
+type TDiscordRestGuild = { id: string; name: string }
+type TDiscordRestChannel = {
+  id: string
+  name: string
+  type: number
+  topic?: string | null
+  guild_id?: string
+}
+type TDiscordRestMessageAttachment = { id: string; filename: string; url: string; size: number }
+type TDiscordRestMessage = {
+  id: string
+  content: string
+  timestamp: string
+  author: { id: string; username: string; bot?: boolean }
+  attachments: TDiscordRestMessageAttachment[]
+  message_reference?: { message_id?: string }
+}
+
+const listBotGuildsViaRest = async (client: unknown): Promise<TDiscordRestGuild[]> => {
+  const result = await (client as any).rest.get('/users/@me/guilds')
+  return (result ?? []) as TDiscordRestGuild[]
+}
+
+const listGuildChannelsViaRest = async (
+  client: unknown,
+  guildId: string,
+): Promise<TDiscordRestChannel[]> => {
+  const result = await (client as any).rest.get(`/guilds/${guildId}/channels`)
+  return (result ?? []) as TDiscordRestChannel[]
+}
+
+const fetchChannelViaRest = async (
+  client: unknown,
+  channelId: string,
+): Promise<TDiscordRestChannel | null> => {
+  return (await (client as any).rest
+    .get(`/channels/${channelId}`)
+    .catch(() => null)) as TDiscordRestChannel | null
+}
+
+const fetchChannelMessagesViaRest = async (
+  client: unknown,
+  channelId: string,
+  limit: number,
+  before?: string,
+): Promise<TDiscordRestMessage[]> => {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (before) params.set('before', before)
+  const path = `/channels/${channelId}/messages?${params.toString()}`
+  const result = await (client as any).rest.get(path)
+  return (result ?? []) as TDiscordRestMessage[]
+}
 
 /**
  * Convert markdown to Slack mrkdwn format.
@@ -166,10 +219,16 @@ export const listDiscordChannels = tool(
         }
       }
 
-      const channels: any[] = []
+      const channels: Array<{
+        id: string
+        name: string
+        guildId: string
+        guildName: string
+        type: string
+        topic: string | null
+      }> = []
 
-      // Get guilds filtered to workspace's connections
-      let guilds: any[]
+      let guilds: TDiscordRestGuild[]
       if (args.guild_id) {
         if (!allowed.guildIds.has(args.guild_id)) {
           return {
@@ -189,26 +248,26 @@ export const listDiscordChannels = tool(
             ],
           }
         }
-        guilds = [client.guilds.cache.get(args.guild_id)].filter(Boolean)
+        const allBotGuilds = await listBotGuildsViaRest(client)
+        guilds = allBotGuilds.filter((g) => g.id === args.guild_id)
       } else {
-        guilds = Array.from(client.guilds.cache.values()).filter((g: any) =>
-          allowed.guildIds.has(g.id),
-        )
+        const allBotGuilds = await listBotGuildsViaRest(client)
+        guilds = allBotGuilds.filter((g) => allowed.guildIds.has(g.id))
       }
 
       for (const guild of guilds) {
-        const textChannels = guild.channels.cache.filter(
-          (ch: any) => ch.type === 0 || ch.type === 5, // GUILD_TEXT or GUILD_ANNOUNCEMENT
+        const guildChannels = await listGuildChannelsViaRest(client, guild.id)
+        const textChannels = guildChannels.filter(
+          (ch) => ch.type === 0 || ch.type === 5, // GUILD_TEXT or GUILD_ANNOUNCEMENT
         )
-
-        for (const [channelId, channel] of textChannels) {
+        for (const channel of textChannels) {
           channels.push({
-            id: channelId,
+            id: channel.id,
             name: channel.name,
             guildId: guild.id,
             guildName: guild.name,
             type: channel.type === 5 ? 'announcement' : 'text',
-            topic: channel.topic || null,
+            topic: channel.topic ?? null,
           })
         }
       }
@@ -313,9 +372,8 @@ export const fetchDiscordChannelHistory = tool(
         }
       }
 
-      // Get the channel
-      const channel = await client.channels.fetch(args.channel_id)
-      if (!channel || !('messages' in channel)) {
+      const channel = await fetchChannelViaRest(client, args.channel_id)
+      if (!channel || (channel.type !== 0 && channel.type !== 5)) {
         return {
           content: [
             {
@@ -334,8 +392,7 @@ export const fetchDiscordChannelHistory = tool(
         }
       }
 
-      // Verify channel's guild belongs to this workspace
-      if (!(channel as any).guild || !allowed.guildIds.has((channel as any).guild.id)) {
+      if (!channel.guild_id || !allowed.guildIds.has(channel.guild_id)) {
         return {
           content: [
             {
@@ -355,35 +412,34 @@ export const fetchDiscordChannelHistory = tool(
         }
       }
 
-      // Fetch messages
-      const fetchOptions: any = {
-        limit: Math.min(args.limit, 100),
-      }
-      if (args.before_message_id) {
-        fetchOptions.before = args.before_message_id
-      }
+      const limit = Math.min(args.limit, 100)
+      const messages = await fetchChannelMessagesViaRest(
+        client,
+        args.channel_id,
+        limit,
+        args.before_message_id,
+      )
 
-      const messages = await channel.messages.fetch(fetchOptions)
+      const formattedMessages = messages
+        .map((msg) => ({
+          id: msg.id,
+          author: msg.author.username,
+          authorId: msg.author.id,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          isBot: msg.author.bot ?? false,
+          hasAttachments: msg.attachments.length > 0,
+          attachments: msg.attachments.map((att) => ({
+            name: att.filename,
+            url: att.url,
+            size: att.size,
+          })),
+          replyTo: msg.message_reference?.message_id ?? null,
+        }))
+        .reverse()
 
-      // Format messages
-      const formattedMessages = Array.from(messages.values()).map((msg: any) => ({
-        id: msg.id,
-        author: msg.author.username,
-        authorId: msg.author.id,
-        content: msg.content,
-        timestamp: msg.createdAt.toISOString(),
-        isBot: msg.author.bot,
-        hasAttachments: msg.attachments.size > 0,
-        attachments: Array.from(msg.attachments.values()).map((att: any) => ({
-          name: att.name,
-          url: att.url,
-          size: att.size,
-        })),
-        replyTo: msg.reference?.messageId || null,
-      }))
-
-      // Sort by timestamp (oldest first)
-      formattedMessages.reverse()
+      const guilds = await listBotGuildsViaRest(client)
+      const guildName = guilds.find((g) => g.id === channel.guild_id)?.name
 
       log.info(
         {
@@ -402,11 +458,11 @@ export const fetchDiscordChannelHistory = tool(
               {
                 success: true,
                 channelId: args.channel_id,
-                channelName: (channel as any).name,
-                guildName: (channel as any).guild?.name,
+                channelName: channel.name,
+                guildName,
                 messageCount: formattedMessages.length,
                 messages: formattedMessages,
-                hasMore: messages.size === fetchOptions.limit,
+                hasMore: messages.length === limit,
                 oldestMessageId: formattedMessages.length > 0 ? formattedMessages[0]!.id : null,
               },
               null,
@@ -508,54 +564,63 @@ export const searchDiscordMessages = tool(
         }
       }
 
-      const results: any[] = []
+      const results: Array<{
+        channelId: string
+        channelName: string
+        guildName: string | undefined
+        messageId: string
+        author: string
+        content: string
+        timestamp: string
+        isBot: boolean
+      }> = []
       const queryLower = args.query.toLowerCase()
 
-      // Get channels to search (filtered to workspace guilds)
-      let channelsToSearch: any[] = []
+      type TSearchTarget = { channel: TDiscordRestChannel; guildName?: string }
+      let channelsToSearch: TSearchTarget[] = []
+      const guilds = await listBotGuildsViaRest(client)
+      const guildNameById = new Map(guilds.map((g) => [g.id, g.name]))
+
       if (args.channel_id) {
-        const channel = await client.channels.fetch(args.channel_id)
+        const channel = await fetchChannelViaRest(client, args.channel_id)
         if (
           channel &&
-          'messages' in channel &&
-          (channel as any).guild &&
-          allowed.guildIds.has((channel as any).guild.id)
+          (channel.type === 0 || channel.type === 5) &&
+          channel.guild_id &&
+          allowed.guildIds.has(channel.guild_id)
         ) {
-          channelsToSearch = [channel]
+          channelsToSearch = [{ channel, guildName: guildNameById.get(channel.guild_id) }]
         }
       } else {
-        // Search text channels only in workspace-connected guilds
-        for (const guild of client.guilds.cache.values()) {
+        for (const guild of guilds) {
           if (!allowed.guildIds.has(guild.id)) continue
-          const textChannels = guild.channels.cache.filter(
-            (ch: any) => ch.type === 0 && ch.permissionsFor(client.user)?.has('ViewChannel'),
+          const guildChannels = await listGuildChannelsViaRest(client, guild.id)
+          const textChannels = guildChannels.filter((ch) => ch.type === 0).slice(0, 5)
+          channelsToSearch.push(
+            ...textChannels.map((channel) => ({ channel, guildName: guild.name })),
           )
-          channelsToSearch.push(...Array.from(textChannels.values()).slice(0, 5))
         }
         channelsToSearch = channelsToSearch.slice(0, 10)
       }
 
-      // Search each channel
-      for (const channel of channelsToSearch) {
+      for (const { channel, guildName } of channelsToSearch) {
         try {
-          const messages = await channel.messages.fetch({ limit: args.limit })
-
-          for (const msg of messages.values()) {
+          const messages = await fetchChannelMessagesViaRest(client, channel.id, args.limit)
+          for (const msg of messages) {
             if (msg.content.toLowerCase().includes(queryLower)) {
               results.push({
                 channelId: channel.id,
                 channelName: channel.name,
-                guildName: channel.guild?.name,
+                guildName,
                 messageId: msg.id,
                 author: msg.author.username,
                 content: msg.content,
-                timestamp: msg.createdAt.toISOString(),
-                isBot: msg.author.bot,
+                timestamp: msg.timestamp,
+                isBot: msg.author.bot ?? false,
               })
             }
           }
         } catch (err) {
-          // Skip channels we can't access
           log.warn(
             { err, channelId: channel.id, tool: 'search_discord_channel_messages' },
             'could not search channel',
@@ -563,7 +628,6 @@ export const searchDiscordMessages = tool(
         }
       }
 
-      // Sort by timestamp (newest first)
       results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
       log.info(
@@ -1235,14 +1299,14 @@ export const sendDiscordMessage = tool(
         return toolError('Workspace context not available')
       }
 
-      // Fetch the channel
-      const channel = await client.channels.fetch(args.channel_id)
-      if (!channel || !('send' in channel)) {
-        return toolError(`Channel ${args.channel_id} not found or is not a text-based channel`)
+      // Verify channel belongs to a workspace-connected guild via REST (works without gateway cache)
+      const channelData = (await (client as any).rest
+        .get(`/channels/${args.channel_id}`)
+        .catch(() => null)) as { id: string; guild_id?: string; type: number } | null
+      if (!channelData) {
+        return toolError(`Channel ${args.channel_id} not found`)
       }
-
-      // Verify channel's guild belongs to this workspace
-      if (!(channel as any).guild || !allowed.guildIds.has((channel as any).guild.id)) {
+      if (!channelData.guild_id || !allowed.guildIds.has(channelData.guild_id)) {
         return toolError(
           'This channel does not belong to a Discord server connected to your workspace',
         )
@@ -1252,29 +1316,25 @@ export const sendDiscordMessage = tool(
       const resolved = await resolveAttachments(args.attachments, 'discord')
       if (resolved.error) return resolved.error
 
-      const discordFiles = resolved.files.map(
-        (f) => new AttachmentBuilder(f.content, { name: f.filename }),
-      )
-
+      // Note: REST send doesn't support discord.js AttachmentBuilder; we send content only.
+      // Attachments via REST require multipart/form-data — TODO if needed.
       const chunks = chunkDiscordMessage(args.content)
       let firstMessageId: string | null = null
 
       for (let i = 0; i < chunks.length; i++) {
-        const sendOptions: any = { content: chunks[i] }
-
-        // Only reply on the first chunk
+        const body: Record<string, unknown> = { content: chunks[i] }
         if (i === 0 && args.reply_to_message_id) {
-          sendOptions.reply = { messageReference: args.reply_to_message_id }
+          body.message_reference = {
+            message_id: args.reply_to_message_id,
+            fail_if_not_exists: false,
+          }
         }
-
-        // Attach files to the first chunk only
-        if (i === 0 && discordFiles.length > 0) {
-          sendOptions.files = discordFiles
-        }
-
-        const sent = await channel.send(sendOptions)
+        const sent = (await (client as any).rest.post(`/channels/${args.channel_id}/messages`, {
+          body,
+        })) as { id: string }
         if (i === 0) firstMessageId = sent.id
       }
+      const discordFiles: { filename: string }[] = []
 
       log.info(
         {

@@ -91,6 +91,25 @@ export class DiscordBot implements IDiscordBot {
   }
 
   /**
+   * Initialize a REST-only Discord client (no gateway WS) so workspace VM tools
+   * can call Discord APIs while the orchestrator owns the gateway connection.
+   */
+  async startRestOnly(): Promise<void> {
+    if (!this.token) {
+      log.warn('No DISCORD_BOT_TOKEN configured, REST-only init skipped')
+      return
+    }
+    if (this.isConnected) return
+
+    this.client = new Client({ intents: [GatewayIntentBits.Guilds] })
+    this.client.token = this.token
+    this.client.rest.setToken(this.token)
+    setDiscordClient(this.client)
+    this.isConnected = true
+    log.info('Discord client initialized in REST-only mode')
+  }
+
+  /**
    * Disconnect the Discord bot
    */
   async stop(): Promise<void> {

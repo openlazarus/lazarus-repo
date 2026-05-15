@@ -69,7 +69,7 @@ export interface SupabaseWorkspace {
  * Backend Workspace model - represents a workspace from the lazarus-ts backend
  * This is the source of truth for workspace data
  */
-export type WorkspaceStatus = 'starting' | 'healthy' | 'unhealthy'
+export type WorkspaceStatus = 'starting' | 'healthy' | 'unhealthy' | 'not_provisioned'
 
 export interface BackendWorkspace {
   id: string

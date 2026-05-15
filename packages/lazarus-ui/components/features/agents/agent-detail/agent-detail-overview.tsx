@@ -125,13 +125,18 @@ export function AgentDetailOverview({
 }: AgentDetailOverviewProps) {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const enabledToolCount = editedAgent.allowedTools?.length || 0
+  const allToolsEnabled = editedAgent.allowedTools?.includes('*')
+  const enabledToolCount = allToolsEnabled
+    ? AVAILABLE_TOOLS.length
+    : editedAgent.allowedTools?.length || 0
   const enabledMCPNames = new Set(
     availableMCPs.filter((m) => m.enabled !== false).map((m) => m.name),
   )
-  const enabledSourceCount =
-    editedAgent.activeMCPs?.filter((name) => enabledMCPNames.has(name))
-      .length || 0
+  const allMCPsEnabled = !editedAgent.activeMCPs
+  const enabledSourceCount = allMCPsEnabled
+    ? enabledMCPNames.size
+    : editedAgent.activeMCPs?.filter((name) => enabledMCPNames.has(name))
+        .length || 0
 
   return (
     <div className='space-y-6 pt-8'>
@@ -252,7 +257,9 @@ export function AgentDetailOverview({
                   <div className='flex flex-wrap gap-2'>
                     {AVAILABLE_TOOLS.map((tool) => {
                       const ToolIcon = TOOL_ICONS[tool] || RiSettings3Line
-                      const isActive = editedAgent.allowedTools.includes(tool)
+                      const isActive =
+                        allToolsEnabled ||
+                        editedAgent.allowedTools.includes(tool)
 
                       return (
                         <button
@@ -315,9 +322,9 @@ export function AgentDetailOverview({
                             mcp.name,
                           )
                           const IconComponent = getMCPIcon(mcp.name)
-                          const isActive = editedAgent.activeMCPs?.includes(
-                            mcp.name,
-                          )
+                          const isActive =
+                            allMCPsEnabled ||
+                            editedAgent.activeMCPs?.includes(mcp.name)
 
                           return (
                             <button

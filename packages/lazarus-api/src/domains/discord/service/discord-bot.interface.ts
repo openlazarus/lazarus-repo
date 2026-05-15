@@ -5,6 +5,9 @@ export interface IDiscordBot {
   /** Initialize and connect the Discord bot. */
   start(): Promise<void>
 
+  /** Initialize a REST-only Discord client (no gateway WS). */
+  startRestOnly(): Promise<void>
+
   /** Disconnect the Discord bot. */
   stop(): Promise<void>
 
