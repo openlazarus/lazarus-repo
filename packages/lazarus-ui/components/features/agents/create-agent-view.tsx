@@ -240,21 +240,29 @@ export function CreateAgentView({
   }
 
   const toggleTool = (tool: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      allowedTools: prev.allowedTools?.includes(tool)
-        ? prev.allowedTools.filter((t) => t !== tool)
-        : [...(prev.allowedTools || []), tool],
-    }))
+    setFormData((prev) => {
+      const tools = prev.allowedTools?.includes('*')
+        ? AVAILABLE_TOOLS
+        : prev.allowedTools || []
+      return {
+        ...prev,
+        allowedTools: tools.includes(tool)
+          ? tools.filter((t) => t !== tool)
+          : [...tools, tool],
+      }
+    })
   }
 
   const toggleMCP = (mcp: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      activeMCPs: prev.activeMCPs?.includes(mcp)
-        ? prev.activeMCPs.filter((m) => m !== mcp)
-        : [...(prev.activeMCPs || []), mcp],
-    }))
+    setFormData((prev) => {
+      const mcps = prev.activeMCPs ?? availableMCPs.map((m) => m.name)
+      return {
+        ...prev,
+        activeMCPs: mcps.includes(mcp)
+          ? mcps.filter((m) => m !== mcp)
+          : [...mcps, mcp],
+      }
+    })
   }
 
   return (
