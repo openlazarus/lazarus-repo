@@ -449,9 +449,10 @@ export class MCPConfigManager implements IMCPConfigManager {
 
     const resolvedServers: Record<string, MCPServerConfig> = {}
 
-    // Include direct server configs (legacy support)
     if (config.mcpServers) {
-      Object.assign(resolvedServers, config.mcpServers)
+      for (const [name, server] of Object.entries(config.mcpServers)) {
+        resolvedServers[name] = this.refreshPresetPath(server as MCPWorkspaceServerConfig)
+      }
     }
 
     // Resolve template references using platform defaults
