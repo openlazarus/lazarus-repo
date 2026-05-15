@@ -28,7 +28,12 @@ const summaryOption = z
 
 const filterShape = {
   query: z.string().optional().describe('Free-text search query.'),
-  tag: z.string().optional().describe('Filter to contacts carrying this tag (server-side).'),
+  tag: z
+    .string()
+    .optional()
+    .describe(
+      'Filter to contacts carrying this tag (case-insensitive). Givebutter ignores this server-side; we filter client-side after each page fetch, so paginated counts reflect the filter.',
+    ),
   archived: z.boolean().optional().describe('Include/exclude archived contacts.'),
   email: z.string().optional().describe('Exact-match email lookup.'),
   phone: z.string().optional().describe('Exact-match phone lookup.'),

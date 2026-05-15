@@ -1,6 +1,7 @@
 import { IGivebutterContactsApi } from './contacts-api.service.interface'
 import { IGivebutterHttpClient } from '@mcp/givebutter/infrastructure/givebutter-http-client.interface'
 import {
+  TContactListParams,
   TCreateContactInput,
   TGivebutterContact,
   TListParams,
@@ -8,14 +9,26 @@ import {
   TUpdateContactInput,
 } from '@mcp/givebutter/types/givebutter.types'
 
+const normalizeTag = (tag: string): string => tag.trim().toLowerCase()
+
+const contactHasTag = (contact: TGivebutterContact, tag: string): boolean => {
+  const target = normalizeTag(tag)
+  return (contact.tags ?? []).some((t) => normalizeTag(t) === target)
+}
+
 export class GivebutterContactsApi implements IGivebutterContactsApi {
   constructor(private readonly http: IGivebutterHttpClient) {}
 
-  listContacts(params?: TListParams): Promise<TPaginated<TGivebutterContact>> {
-    return this.http.get<TPaginated<TGivebutterContact>>(
+  async listContacts(params?: TListParams): Promise<TPaginated<TGivebutterContact>> {
+    const result = await this.http.get<TPaginated<TGivebutterContact>>(
       '/v1/contacts',
       params as Record<string, unknown>,
     )
+    const tag = (params as TContactListParams | undefined)?.tag
+    if (!tag) return result
+    const filtered = result.data.filter((c) => contactHasTag(c, tag))
+    if (filtered.length === result.data.length) return result
+    return { ...result, data: filtered }
   }
 
   getContact(id: number): Promise<TGivebutterContact> {

@@ -1196,20 +1196,16 @@ ${task}
       }
     }
 
-    // Add workspace MCP servers if agent allows MCP tool
     if (agent.allowedTools.includes('mcp') || agent.allowedTools.includes('*')) {
-      // Filter workspace MCPs based on activeMCPs if specified
       const workspaceServers = workspaceMcpConfig.mcpServers || {}
 
-      if (agent.activeMCPs && agent.activeMCPs.length > 0) {
-        // Only include specified MCPs
+      if (Array.isArray(agent.activeMCPs)) {
         for (const mcpName of agent.activeMCPs) {
           if (workspaceServers[mcpName]) {
             mcpConfig.mcpServers[mcpName] = workspaceServers[mcpName]
           }
         }
       } else {
-        // Include all workspace MCPs
         Object.assign(mcpConfig.mcpServers, workspaceServers)
       }
     }
