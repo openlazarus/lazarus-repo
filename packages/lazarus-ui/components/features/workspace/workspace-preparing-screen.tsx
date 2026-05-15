@@ -9,10 +9,12 @@ import type {
   Workspace as PollableWorkspace,
   WorkspaceStatus,
 } from '@/hooks/features/workspace/types'
+import { useCreateWorkspace } from '@/hooks/features/workspace/use-create-workspace'
 import { useProvisioningWatcher } from '@/hooks/features/workspace/use-provisioning-watcher'
 import { useStartWorkspace } from '@/hooks/features/workspace/use-start-workspace'
 import { api } from '@/lib/api-client'
 import { useAuthStore } from '@/store/auth-store'
+import { useWorkspaceStore } from '@/store/workspace-store'
 
 interface WorkspacePreparingScreenProps {
   workspaceId: string
@@ -51,6 +53,9 @@ export function WorkspacePreparingScreen({
   const { refreshWorkspaces } = useWorkspace()
   const [startWorkspaceVm, { loading: isStartLoading }] =
     useStartWorkspace(workspaceId)
+  const [createWorkspace, { loading: isCreatingWorkspace }] =
+    useCreateWorkspace()
+  const setActiveWorkspace = useWorkspaceStore((s) => s.setActiveWorkspace)
   const currentUserId = useAuthStore((s) => s.userId)
   const isOwner = !!ownerId && !!currentUserId && ownerId === currentUserId
   const [isWorking, setIsWorking] = useState(false)
@@ -98,6 +103,15 @@ export function WorkspacePreparingScreen({
     }
   }, [refreshWorkspaces, startWorkspaceVm])
 
+  // Escape hatch for a non-owner whose only access is a stopped workspace:
+  // spin up their own one-click. New workspace becomes active so the layout
+  // re-renders into its preparing/healthy state automatically.
+  const triggerCreate = useCallback(async () => {
+    const newId = await createWorkspace()
+    await refreshWorkspaces()
+    if (newId) setActiveWorkspace(newId)
+  }, [createWorkspace, refreshWorkspaces, setActiveWorkspace])
+
   if (screenState === 'errored') {
     return (
       <ScreenShell>
@@ -135,12 +149,19 @@ export function WorkspacePreparingScreen({
         <Subline
           text={isOwner ? STOPPED_SUBLINE_OWNER : STOPPED_SUBLINE_VIEWER}
         />
-        {isOwner && (
+        {isOwner ? (
           <ActionButton
             onClick={triggerStart}
             isLoading={isStartLoading}
             label='Turn on'
             loadingLabel='Starting…'
+          />
+        ) : (
+          <ActionButton
+            onClick={triggerCreate}
+            isLoading={isCreatingWorkspace}
+            label='Create your own workspace'
+            loadingLabel='Creating…'
           />
         )}
       </ScreenShell>
