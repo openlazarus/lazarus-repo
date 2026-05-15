@@ -1025,19 +1025,7 @@ export function WorkspaceConfigViewer({
                 )}>
                 Pending invitations
               </h3>
-              <m.div
-                className='space-y-0'
-                initial='hidden'
-                animate='visible'
-                variants={{
-                  hidden: {},
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.05,
-                      delayChildren: 0.1,
-                    },
-                  },
-                }}>
+              <div className='space-y-0'>
                 {invitations.map((invitation, index) => (
                   <m.div
                     key={invitation.id}
@@ -1049,17 +1037,12 @@ export function WorkspaceConfigViewer({
                           ? 'border-t border-t-white/5'
                           : 'border-t border-t-black/5'),
                     )}
-                    variants={{
-                      hidden: { opacity: 0, x: -20, filter: 'blur(4px)' },
-                      visible: {
-                        opacity: 1,
-                        x: 0,
-                        filter: 'blur(0px)',
-                        transition: {
-                          duration: 0.4,
-                          ease: [0.22, 1, 0.36, 1],
-                        },
-                      },
+                    initial={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                    animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.05,
+                      ease: [0.22, 1, 0.36, 1],
                     }}>
                     <div className='flex items-center gap-3'>
                       <RiMailLine
@@ -1086,7 +1069,7 @@ export function WorkspaceConfigViewer({
                     </Button>
                   </m.div>
                 ))}
-              </m.div>
+              </div>
             </div>
           )}
 
@@ -1104,19 +1087,7 @@ export function WorkspaceConfigViewer({
                 </span>
               </div>
             ) : (
-              <m.div
-                className='space-y-0'
-                initial='hidden'
-                animate='visible'
-                variants={{
-                  hidden: {},
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.05,
-                      delayChildren: 0.1,
-                    },
-                  },
-                }}>
+              <div className='space-y-0'>
                 {members.map((member, index) => (
                   <m.div
                     key={member.id}
@@ -1128,17 +1099,12 @@ export function WorkspaceConfigViewer({
                           ? 'border-t border-t-white/5'
                           : 'border-t border-t-black/5'),
                     )}
-                    variants={{
-                      hidden: { opacity: 0, x: -20, filter: 'blur(4px)' },
-                      visible: {
-                        opacity: 1,
-                        x: 0,
-                        filter: 'blur(0px)',
-                        transition: {
-                          duration: 0.4,
-                          ease: [0.22, 1, 0.36, 1],
-                        },
-                      },
+                    initial={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                    animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                    transition={{
+                      duration: 0.4,
+                      delay: index * 0.05,
+                      ease: [0.22, 1, 0.36, 1],
                     }}>
                     <div className='flex items-center gap-3'>
                       {member.profile?.avatar &&
@@ -1228,7 +1194,7 @@ export function WorkspaceConfigViewer({
                     </div>
                   </m.div>
                 ))}
-              </m.div>
+              </div>
             )}
           </div>
         </m.div>
