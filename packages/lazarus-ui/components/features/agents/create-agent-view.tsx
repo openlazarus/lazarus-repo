@@ -392,7 +392,9 @@ export function CreateAgentView({
                     if (workspaceConfig?.slug && agentId) {
                       return `${agentId}@${workspaceConfig.slug}.${emailDomain}`
                     }
-                    return agentId ? `${agentId}@${emailDomain}` : `@${emailDomain}`
+                    return agentId
+                      ? `${agentId}@${emailDomain}`
+                      : `@${emailDomain}`
                   })()}
                   disabled
                   variant='ghost'
@@ -448,7 +450,9 @@ export function CreateAgentView({
                 <div className='flex flex-wrap gap-2'>
                   {AVAILABLE_TOOLS.map((tool) => {
                     const ToolIcon = TOOL_ICONS[tool] || RiSettings3Line
-                    const isActive = formData.allowedTools?.includes(tool)
+                    const isActive =
+                      formData.allowedTools?.includes('*') ||
+                      formData.allowedTools?.includes(tool)
 
                     return (
                       <button
@@ -482,13 +486,19 @@ export function CreateAgentView({
                   isDark ? 'border-white/10' : 'border-black/10',
                 )}>
                 Sources
-                {formData.activeMCPs && formData.activeMCPs.length > 0 && (
+                {(formData.activeMCPs
+                  ? formData.activeMCPs.length > 0
+                  : availableMCPs.length > 0) && (
                   <span
                     className={cn(
                       'ml-2 text-[11px] font-normal',
                       isDark ? 'text-white/50' : 'text-black/50',
                     )}>
-                    ({formData.activeMCPs.length})
+                    (
+                    {formData.activeMCPs
+                      ? formData.activeMCPs.length
+                      : availableMCPs.length}
+                    )
                   </span>
                 )}
               </h2>
@@ -518,7 +528,9 @@ export function CreateAgentView({
                         mcp.name,
                       )
                       const IconComponent = getMCPIcon(mcp.name)
-                      const isActive = formData.activeMCPs?.includes(mcp.name)
+                      const isActive =
+                        !formData.activeMCPs ||
+                        formData.activeMCPs.includes(mcp.name)
 
                       return (
                         <button
